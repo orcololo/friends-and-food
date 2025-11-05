@@ -63,6 +63,8 @@ export const api = {
   deleteEvent: (id: string) => apiRequest(`/events/${id}`, { method: 'DELETE' }),
   attendEvent: (id: string) => apiRequest(`/events/${id}/attend`, { method: 'POST' }),
   unattendEvent: (id: string) => apiRequest(`/events/${id}/attend`, { method: 'DELETE' }),
+  getEventComments: (id: string) => apiRequest(`/events/${id}/comments`),
+  addEventComment: (id: string, content: string) => apiRequest(`/events/${id}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
 
   // Reviews
   createReview: (data: any) => apiRequest('/reviews', { method: 'POST', body: JSON.stringify(data) }),
