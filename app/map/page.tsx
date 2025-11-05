@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
-import { UtensilsCrossed, Calendar } from 'lucide-react';
+import { UtensilsCrossed, Calendar, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -26,6 +26,7 @@ export default function MapPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'places' | 'events'>('all');
+  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -72,6 +73,23 @@ export default function MapPage() {
   const filteredPlaces = selectedFilter === 'events' ? [] : places;
   const filteredEvents = selectedFilter === 'places' ? [] : events;
 
+  // Calculate debug information
+  const validPlaces = places.filter(p =>
+    p.location?.coordinates &&
+    Array.isArray(p.location.coordinates) &&
+    p.location.coordinates.length === 2 &&
+    typeof p.location.coordinates[0] === 'number' &&
+    typeof p.location.coordinates[1] === 'number'
+  );
+
+  const validEvents = events.filter(e =>
+    e.location?.coordinates &&
+    Array.isArray(e.location.coordinates) &&
+    e.location.coordinates.length === 2 &&
+    typeof e.location.coordinates[0] === 'number' &&
+    typeof e.location.coordinates[1] === 'number'
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">
       <Navbar />
@@ -87,6 +105,150 @@ export default function MapPage() {
           </h1>
           <p className="text-gray-600">Explore restaurants and events near you</p>
         </motion.div>
+
+        {/* Debug Panel */}
+        {(places.length === 0 || validPlaces.length === 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <Card className="border-2 border-yellow-300 bg-yellow-50">
+              <div className="flex items-start space-x-3">
+                <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <h3 className="font-bold text-yellow-900 mb-2">No Map Markers Available</h3>
+                  {places.length === 0 ? (
+                    <div className="space-y-2 text-sm text-yellow-800">
+                      <p>No places found in the database.</p>
+                      <p className="font-semibold">To fix this, run the seed script:</p>
+                      <pre className="bg-yellow-100 p-3 rounded mt-2 overflow-x-auto text-xs">
+                        npm install -g ts-node{'\n'}
+                        ts-node scripts/seed-sample-data.ts
+                      </pre>
+                      <p className="mt-2">Or create a place manually using the "Add Place" button in the sidebar.</p>
+                    </div>
+                  ) : validPlaces.length === 0 ? (
+                    <div className="space-y-2 text-sm text-yellow-800">
+                      <p>Found {places.length} place(s) but none have valid location coordinates.</p>
+                      <p>Places need a location object with coordinates: <code className="bg-yellow-100 px-1 rounded">[longitude, latitude]</code></p>
+                      <button
+                        onClick={() => setShowDebug(!showDebug)}
+                        className="mt-2 text-yellow-900 font-medium underline hover:no-underline flex items-center space-x-1"
+                      >
+                        <span>{showDebug ? 'Hide' : 'Show'} Debug Info</span>
+                        {showDebug ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Detailed Debug Panel */}
+        {showDebug && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-6"
+          >
+            <Card className="border border-gray-300 bg-gray-50">
+              <h3 className="font-bold text-gray-900 mb-4">Debug Information</h3>
+              <div className="space-y-4 text-sm">
+                {/* Summary */}
+                <div className="grid grid-cols-2 gap-4 p-3 bg-white rounded border border-gray-200">
+                  <div>
+                    <p className="font-semibold text-gray-700">Places Loaded:</p>
+                    <p className="text-2xl font-bold text-orange-600">{places.length}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-700">Valid Coordinates:</p>
+                    <p className="text-2xl font-bold text-green-600">{validPlaces.length}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-700">Events Loaded:</p>
+                    <p className="text-2xl font-bold text-purple-600">{events.length}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-700">Valid Coordinates:</p>
+                    <p className="text-2xl font-bold text-green-600">{validEvents.length}</p>
+                  </div>
+                </div>
+
+                {/* First Place Details */}
+                {places.length > 0 && (
+                  <div className="p-3 bg-white rounded border border-gray-200">
+                    <p className="font-semibold text-gray-700 mb-2">First Place Data:</p>
+                    <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto">
+                      {JSON.stringify({
+                        name: places[0].name,
+                        _id: places[0]._id,
+                        location: places[0].location,
+                        hasLocation: !!places[0].location,
+                        hasCoordinates: !!places[0].location?.coordinates,
+                        isArray: Array.isArray(places[0].location?.coordinates),
+                        length: places[0].location?.coordinates?.length,
+                        coordinates: places[0].location?.coordinates,
+                      }, null, 2)}
+                    </pre>
+                  </div>
+                )}
+
+                {/* All Places Summary */}
+                {places.length > 0 && (
+                  <div className="p-3 bg-white rounded border border-gray-200">
+                    <p className="font-semibold text-gray-700 mb-2">All Places ({places.length}):</p>
+                    <div className="space-y-1 max-h-60 overflow-y-auto">
+                      {places.map((place, idx) => {
+                        const hasValidCoords = place.location?.coordinates &&
+                          Array.isArray(place.location.coordinates) &&
+                          place.location.coordinates.length === 2 &&
+                          typeof place.location.coordinates[0] === 'number' &&
+                          typeof place.location.coordinates[1] === 'number';
+
+                        return (
+                          <div
+                            key={place._id || idx}
+                            className={`flex items-center justify-between p-2 rounded text-xs ${
+                              hasValidCoords ? 'bg-green-50' : 'bg-red-50'
+                            }`}
+                          >
+                            <span className="font-medium truncate flex-1">{place.name}</span>
+                            <span className={`ml-2 px-2 py-1 rounded ${
+                              hasValidCoords ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+                            }`}>
+                              {hasValidCoords ? '✓ Valid' : '✗ Invalid'}
+                            </span>
+                            {hasValidCoords && (
+                              <span className="ml-2 text-gray-600 text-xs">
+                                [{place.location.coordinates[0].toFixed(4)}, {place.location.coordinates[1].toFixed(4)}]
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Instructions */}
+                <div className="p-3 bg-blue-50 rounded border border-blue-200">
+                  <p className="font-semibold text-blue-900 mb-2">Troubleshooting Steps:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-blue-800">
+                    <li>Check if places have <code className="bg-blue-100 px-1 rounded">location.coordinates</code></li>
+                    <li>Coordinates must be <code className="bg-blue-100 px-1 rounded">[longitude, latitude]</code> format</li>
+                    <li>Both values must be numbers (not strings)</li>
+                    <li>Run seed script to populate sample data with valid coordinates</li>
+                    <li>Check browser console for MapView debugging logs</li>
+                  </ol>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-16rem)]">
           {/* Sidebar */}
@@ -150,10 +312,23 @@ export default function MapPage() {
                     <span className="text-gray-600">Total Places:</span>
                     <span className="font-semibold text-orange-600">{places.length}</span>
                   </div>
+                  <div className="flex items-center justify-between pl-4">
+                    <span className="text-gray-500 text-xs">With valid coords:</span>
+                    <span className={`font-semibold text-xs ${validPlaces.length > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {validPlaces.length}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Total Events:</span>
                     <span className="font-semibold text-purple-600">{events.length}</span>
                   </div>
+                  <div className="flex items-center justify-between pl-4">
+                    <span className="text-gray-500 text-xs">With valid coords:</span>
+                    <span className={`font-semibold text-xs ${validEvents.length > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {validEvents.length}
+                    </span>
+                  </div>
+                  <div className="border-t border-gray-200 my-2"></div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Visible Places:</span>
                     <span className="font-semibold text-orange-600">{filteredPlaces.length}</span>
@@ -161,6 +336,13 @@ export default function MapPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Visible Events:</span>
                     <span className="font-semibold text-purple-600">{filteredEvents.length}</span>
+                  </div>
+                  <div className="border-t border-gray-200 my-2"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-700 font-medium">Total Markers:</span>
+                    <span className={`font-bold text-lg ${(validPlaces.length + validEvents.length) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {validPlaces.length + validEvents.length}
+                    </span>
                   </div>
                 </div>
               </Card>

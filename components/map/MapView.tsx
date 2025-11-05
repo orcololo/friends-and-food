@@ -46,6 +46,10 @@ export default function MapView({
   center = [0.0349, -51.0694], // Macapá-AP, Brazil - Note: Leaflet uses [lat, lng] not [lng, lat]
   zoom = 13
 }: MapViewProps) {
+  // Add a test marker to verify Leaflet is working
+  const TEST_MARKER_ENABLED = false; // Set to true to test if Leaflet rendering works
+  const testMarkerPosition: [number, number] = [0.0349, -51.0694]; // Macapá center
+
   // Calculate valid markers
   const validPlaces = places.filter(p => p.location?.coordinates && Array.isArray(p.location.coordinates) && p.location.coordinates.length === 2);
   const validEvents = events.filter(e => e.location?.coordinates && Array.isArray(e.location.coordinates) && e.location.coordinates.length === 2);
@@ -89,6 +93,19 @@ export default function MapView({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <MapUpdater center={mapCenter} zoom={mapZoom} />
+
+        {/* Test Marker - to verify Leaflet is working */}
+        {TEST_MARKER_ENABLED && (
+          <Marker position={testMarkerPosition} icon={placeIcon}>
+            <Popup>
+              <div className="p-2">
+                <h3 className="font-bold text-base mb-1">Test Marker</h3>
+                <p className="text-sm text-gray-600">If you can see this, Leaflet is working!</p>
+                <p className="text-sm text-gray-600">Position: {testMarkerPosition[0]}, {testMarkerPosition[1]}</p>
+              </div>
+            </Popup>
+          </Marker>
+        )}
 
         {/* Place Markers */}
         {validPlaces.map((place) => {
