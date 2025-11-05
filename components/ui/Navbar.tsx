@@ -4,11 +4,32 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    const loadUser = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await fetch('/api/auth/me', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await response.json();
+          if (data.success) {
+            setUser(data.data);
+          }
+        } catch (error) {
+          console.error('Failed to load user:', error);
+        }
+      }
+    };
+    loadUser();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -53,14 +74,9 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <button className="relative">
-              <span className="text-2xl">🔔</span>
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                3
-              </span>
-            </button>
+            <NotificationBell />
 
-            <Link href="/profile">
+            <Link href={user ? `/profile/${user.username}` : '/profile'}>
               <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold cursor-pointer hover:bg-orange-600 transition-colors">
                 {user?.name?.charAt(0) || 'U'}
               </div>

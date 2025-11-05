@@ -32,6 +32,10 @@ export const api = {
   login: (data: any) => apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
   getMe: () => apiRequest('/auth/me'),
 
+  // Users
+  getUser: (id: string) => apiRequest(`/users/${id}`),
+  updateUser: (id: string, data: any) => apiRequest(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
   // Places
   getPlaces: (params?: string) => apiRequest(`/places${params ? `?${params}` : ''}`),
   getPlace: (id: string) => apiRequest(`/places/${id}`),
@@ -59,4 +63,21 @@ export const api = {
   getGroups: () => apiRequest('/groups'),
   getGroup: (id: string) => apiRequest(`/groups/${id}`),
   createGroup: (data: any) => apiRequest('/groups', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Friends
+  getFriends: () => apiRequest('/friends'),
+  getFriendRequests: () => apiRequest('/friends/requests'),
+  sendFriendRequest: (toUserId: string) => apiRequest('/friends', { method: 'POST', body: JSON.stringify({ toUserId }) }),
+  acceptFriendRequest: (id: string) => apiRequest(`/friends/requests/${id}`, { method: 'PUT', body: JSON.stringify({ action: 'accept' }) }),
+  rejectFriendRequest: (id: string) => apiRequest(`/friends/requests/${id}`, { method: 'PUT', body: JSON.stringify({ action: 'reject' }) }),
+  removeFriend: (id: string) => apiRequest(`/friends/${id}`, { method: 'DELETE' }),
+
+  // Notifications
+  getNotifications: (params?: string) => apiRequest(`/notifications${params ? `?${params}` : ''}`),
+  markNotificationRead: (id: string) => apiRequest(`/notifications/${id}`, { method: 'PUT' }),
+  markAllNotificationsRead: () => apiRequest('/notifications/mark-all-read', { method: 'PUT' }),
+  deleteNotification: (id: string) => apiRequest(`/notifications/${id}`, { method: 'DELETE' }),
+
+  // Search
+  search: (query: string, type?: string) => apiRequest(`/search?q=${encodeURIComponent(query)}${type ? `&type=${type}` : ''}`),
 };
