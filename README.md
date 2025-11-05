@@ -107,14 +107,22 @@ friends-and-food/
    JWT_SECRET=your-secure-secret-key-change-in-production
    JWT_EXPIRES_IN=7d
 
-   # Optional: Cloudinary for image uploads
-   CLOUDINARY_CLOUD_NAME=your-cloud-name
-   CLOUDINARY_API_KEY=your-api-key
-   CLOUDINARY_API_SECRET=your-api-secret
+   # Vercel Blob Storage (for image uploads)
+   # Get this from Vercel Dashboard -> Storage -> Create Blob Store
+   BLOB_READ_WRITE_TOKEN=your-vercel-blob-token
 
    # App URL
    NEXT_PUBLIC_APP_URL=http://localhost:3000
    ```
+
+   **Note:** For image uploads to work, you need to set up Vercel Blob Storage:
+   1. Go to your Vercel project dashboard
+   2. Navigate to **Storage** tab
+   3. Click **Create Database** → **Blob**
+   4. Copy the `BLOB_READ_WRITE_TOKEN`
+   5. Add it to your `.env.local` file
+
+   For local development without Vercel, image upload features will be disabled.
 
 4. **Start MongoDB**
 
@@ -243,6 +251,66 @@ Content-Type: application/json
 }
 ```
 
+### Image Upload (Vercel Blob Storage)
+
+#### Upload Single Image
+```http
+POST /api/upload
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+FormData:
+  file: [image file]
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "url": "https://blob-url.vercel-storage.com/...",
+    "filename": "uploads/user-id/timestamp.jpg",
+    "size": 123456,
+    "contentType": "image/jpeg"
+  }
+}
+```
+
+#### Upload Multiple Images
+```http
+POST /api/upload/multiple
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+FormData:
+  files: [image file 1]
+  files: [image file 2]
+  files: [image file 3]
+```
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "files": [
+      {
+        "url": "https://blob-url.vercel-storage.com/...",
+        "filename": "uploads/user-id/timestamp-1.jpg",
+        "size": 123456,
+        "contentType": "image/jpeg"
+      }
+    ],
+    "count": 3
+  }
+}
+```
+
+**Upload Limits:**
+- Max file size: 5MB per image
+- Max files per request: 10 images
+- Allowed types: JPEG, PNG, WebP, GIF
+
 ## Data Models
 
 ### User
@@ -337,11 +405,47 @@ The map view uses React Leaflet with OpenStreetMap:
 - Easy to customize markers and popups
 - Works seamlessly with Next.js when dynamically imported
 
+## Image Upload with Vercel Blob Storage
+
+The app uses Vercel Blob Storage for image uploads:
+
+**Features:**
+- Secure file uploads with authentication
+- Support for single and multiple file uploads
+- File type validation (images only)
+- File size validation (max 5MB per image)
+- Automatic filename generation with user ID and timestamp
+- Public URL generation for uploaded images
+
+**Usage:**
+1. Create a Vercel Blob Store in your Vercel dashboard
+2. Copy the `BLOB_READ_WRITE_TOKEN`
+3. Add it to your `.env.local` file
+4. Use the upload API endpoints to upload images
+5. Use returned URLs in profile images, place photos, reviews, etc.
+
+**Client-side upload example:**
+```typescript
+import { uploadFile } from '@/lib/utils/upload';
+
+const handleUpload = async (file: File) => {
+  const result = await uploadFile(file);
+  console.log('Uploaded to:', result.url);
+};
+```
+
+**Benefits of Vercel Blob:**
+- Integrated with Vercel deployment
+- Fast global CDN
+- Simple setup (just one environment variable)
+- Generous free tier
+- Automatic HTTPS and security
+
 ## Next Steps & Future Enhancements
 
 ### Immediate Improvements
 - [ ] Add real-time features with Socket.io or Pusher
-- [ ] Implement image upload with Cloudinary
+- [x] Implement image upload with Vercel Blob Storage (✅ Completed)
 - [ ] Add search functionality across resources
 - [ ] Create detail pages for places, events, and groups
 - [ ] Add profile page with edit functionality
