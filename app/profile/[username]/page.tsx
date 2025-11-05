@@ -9,6 +9,8 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
+import { useToast } from '@/components/ui/Toast';
+import { api } from '@/lib/utils/api';
 import {
   fadeInUp,
   staggerContainer,
@@ -21,6 +23,7 @@ import {
 export default function ProfilePage() {
   const router = useRouter();
   const params = useParams();
+  const { showToast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -111,6 +114,56 @@ export default function ProfilePage() {
       alert('Friend request sent!');
     } catch (error: any) {
       alert(error.message || 'Failed to send friend request');
+    }
+  };
+
+  const handleLikePost = async (postId: string) => {
+    try {
+      // Optimistic update
+      setProfile((prevProfile: any) => ({
+        ...prevProfile,
+        posts: prevProfile.posts.map((post: any) => {
+          if (post._id === postId) {
+            const isLiked = post.likes?.some((like: any) =>
+              like._id === currentUser?._id || like === currentUser?._id
+            );
+
+            if (isLiked) {
+              // Unlike
+              return {
+                ...post,
+                likes: post.likes.filter((like: any) =>
+                  (like._id || like) !== currentUser?._id
+                ),
+              };
+            } else {
+              // Like
+              return {
+                ...post,
+                likes: [...(post.likes || []), currentUser?._id],
+              };
+            }
+          }
+          return post;
+        }),
+      }));
+
+      // Get current post state to determine action
+      const currentPost = profile.posts.find((p: any) => p._id === postId);
+      const isLiked = currentPost?.likes?.some((like: any) =>
+        like._id === currentUser?._id || like === currentUser?._id
+      );
+
+      // Call API
+      if (isLiked) {
+        await api.unlikePost(postId);
+      } else {
+        await api.likePost(postId);
+      }
+    } catch (error: any) {
+      // Revert on error
+      showToast(error.message || 'Failed to update like', 'error');
+      loadProfile();
     }
   };
 
@@ -357,21 +410,37 @@ export default function ProfilePage() {
                         <Card hover>
                           <p className="text-gray-700 mb-3 leading-relaxed">{post.content}</p>
                           <div className="flex items-center space-x-6 text-sm text-gray-500">
-                            <motion.span
-                              className="flex items-center space-x-2 cursor-pointer hover:text-red-500 transition-colors"
+                            <motion.button
+                              onClick={() => handleLikePost(post._id)}
                               whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
+                              whileTap={{ scale: 0.95 }}
+                              className={`transition-colors flex items-center space-x-2 ${
+                                post.likes?.some((like: any) =>
+                                  (like._id || like) === currentUser?._id
+                                )
+                                  ? 'text-red-500'
+                                  : 'hover:text-red-500'
+                              }`}
                             >
-                              <Heart className="w-4 h-4" />
+                              <Heart
+                                className={`w-5 h-5 ${
+                                  post.likes?.some((like: any) =>
+                                    (like._id || like) === currentUser?._id
+                                  )
+                                    ? 'fill-red-500'
+                                    : ''
+                                }`}
+                              />
                               <span className="font-medium">{post.likes?.length || 0}</span>
-                            </motion.span>
-                            <motion.span
-                              className="flex items-center space-x-2 cursor-pointer hover:text-blue-500 transition-colors"
+                            </motion.button>
+                            <motion.button
                               whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="hover:text-blue-500 transition-colors flex items-center space-x-2"
                             >
-                              <MessageCircle className="w-4 h-4" />
+                              <MessageCircle className="w-5 h-5" />
                               <span className="font-medium">{post.comments?.length || 0}</span>
-                            </motion.span>
+                            </motion.button>
                             <span className="text-xs">{new Date(post.createdAt).toLocaleDateString()}</span>
                           </div>
                         </Card>

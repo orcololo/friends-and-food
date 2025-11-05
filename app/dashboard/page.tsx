@@ -81,6 +81,56 @@ export default function DashboardPage() {
     }
   };
 
+  const handleLikePost = async (postId: string) => {
+    try {
+      // Optimistic update
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => {
+          if (post._id === postId) {
+            const isLiked = post.likes?.some((like: any) =>
+              like._id === user?._id || like === user?._id
+            );
+
+            if (isLiked) {
+              // Unlike
+              return {
+                ...post,
+                likes: post.likes.filter((like: any) =>
+                  (like._id || like) !== user?._id
+                ),
+              };
+            } else {
+              // Like
+              return {
+                ...post,
+                likes: [...(post.likes || []), user?._id],
+              };
+            }
+          }
+          return post;
+        })
+      );
+
+      // Get current post state to determine action
+      const currentPost = posts.find((p) => p._id === postId);
+      const isLiked = currentPost?.likes?.some((like: any) =>
+        like._id === user?._id || like === user?._id
+      );
+
+      // Call API
+      if (isLiked) {
+        await api.unlikePost(postId);
+      } else {
+        await api.likePost(postId);
+      }
+    } catch (error: any) {
+      // Revert on error
+      showToast(error.message || 'Failed to update like', 'error');
+      const postsData = await api.getPosts();
+      setPosts(postsData.data.posts);
+    }
+  };
+
   if (isLoading) {
     return (
       <motion.div
@@ -183,19 +233,34 @@ export default function DashboardPage() {
                             <p className="text-gray-700 mb-3">{post.content}</p>
                             <div className="flex items-center space-x-4 text-gray-500">
                               <motion.button
+                                onClick={() => handleLikePost(post._id)}
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="hover:text-orange-500 transition-colors flex items-center space-x-1"
+                                className={`transition-colors flex items-center space-x-1 ${
+                                  post.likes?.some((like: any) =>
+                                    (like._id || like) === user?._id
+                                  )
+                                    ? 'text-red-500'
+                                    : 'hover:text-red-500'
+                                }`}
                               >
-                                <Heart className="w-4 h-4" />
+                                <Heart
+                                  className={`w-5 h-5 ${
+                                    post.likes?.some((like: any) =>
+                                      (like._id || like) === user?._id
+                                    )
+                                      ? 'fill-red-500'
+                                      : ''
+                                  }`}
+                                />
                                 <span className="font-medium">{post.likes?.length || 0}</span>
                               </motion.button>
                               <motion.button
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="hover:text-orange-500 transition-colors flex items-center space-x-1"
+                                className="hover:text-blue-500 transition-colors flex items-center space-x-1"
                               >
-                                <MessageCircle className="w-4 h-4" />
+                                <MessageCircle className="w-5 h-5" />
                                 <span className="font-medium">{post.comments?.length || 0}</span>
                               </motion.button>
                             </div>
