@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import mongoose from 'mongoose';
 import connectDB from '@/lib/db/mongodb';
 import Message from '@/lib/models/Message';
 import User from '@/lib/models/User';

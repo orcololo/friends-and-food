@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import mongoose from 'mongoose';
 import connectDB from '@/lib/db/mongodb';
 import Post from '@/lib/models/Post';
 import { authenticate, AuthenticatedRequest } from '@/lib/middleware/auth';
@@ -56,12 +57,12 @@ async function postHandler(req: AuthenticatedRequest, { params }: { params: { id
 
     // Add comment to post
     const newComment = {
-      userId: req.user!.userId,
+      userId: new mongoose.Types.ObjectId(req.user!.userId),
       content: content.trim(),
       createdAt: new Date(),
     };
 
-    post.comments.push(newComment);
+    post.comments.push(newComment as any);
     await post.save();
 
     // Populate the new comment's user data

@@ -87,7 +87,7 @@ export default function PlacesPage() {
   const loadSavedPlaces = useCallback(async () => {
     try {
       const response = await api.getSavedPlaces();
-      const savedIds = new Set(response.data.places.map((p: any) => p._id));
+      const savedIds = new Set<string>(response.data.places.map((p: any) => p._id as string));
       setSavedPlaceIds(savedIds);
     } catch (error) {
       console.error('Failed to load saved places:', error);

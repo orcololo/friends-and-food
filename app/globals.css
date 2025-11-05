@@ -15,8 +15,6 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 body {
@@ -36,9 +34,18 @@ body {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  @apply bg-orange-200 dark:bg-orange-800 rounded-full;
+  background: #fed7aa;
+  border-radius: 9999px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  @apply bg-orange-300 dark:bg-orange-700;
+  background: #fdba74;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #9a3412;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #c2410c;
 }

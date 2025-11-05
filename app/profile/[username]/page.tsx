@@ -750,9 +750,11 @@ export default function ProfilePage() {
                     key={friend._id}
                     hover
                     className="cursor-pointer"
-                    onClick={() => router.push(`/profile/${friend.username}`)}
                   >
-                    <div className="flex flex-col items-center text-center">
+                    <div
+                      className="flex flex-col items-center text-center"
+                      onClick={() => router.push(`/profile/${friend.username}`)}
+                    >
                       <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-2">
                         {friend.name?.charAt(0)}
                       </div>
@@ -787,11 +789,12 @@ export default function ProfilePage() {
                     <motion.div
                       key={place._id}
                       whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                      onClick={() => router.push(`/places/${place._id}`)}
+                      className="cursor-pointer"
                     >
                       <Card
                         hover
-                        className="cursor-pointer overflow-hidden"
-                        onClick={() => router.push(`/places/${place._id}`)}
+                        className="overflow-hidden"
                       >
                         {/* Place Image */}
                         <div className="relative h-48 bg-gray-200 overflow-hidden">

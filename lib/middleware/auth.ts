@@ -9,8 +9,8 @@ export interface AuthenticatedRequest extends NextRequest {
   };
 }
 
-export function authenticate(handler: (req: AuthenticatedRequest) => Promise<NextResponse>) {
-  return async (req: AuthenticatedRequest) => {
+export function authenticate(handler: (req: AuthenticatedRequest, ...args: any[]) => Promise<NextResponse>) {
+  return async (req: AuthenticatedRequest, ...args: any[]) => {
     try {
       const token = req.headers.get('authorization')?.replace('Bearer ', '');
 
@@ -31,7 +31,7 @@ export function authenticate(handler: (req: AuthenticatedRequest) => Promise<Nex
       }
 
       req.user = decoded;
-      return handler(req);
+      return handler(req, ...args);
     } catch (error) {
       return NextResponse.json(
         { success: false, message: 'Authentication failed' },
