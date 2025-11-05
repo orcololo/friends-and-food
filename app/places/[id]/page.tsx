@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, MapPin, Heart, Calendar, Share2, ImageIcon } from 'lucide-react';
+import { Star, MapPin, Heart, Calendar, Share2, ImageIcon, X, Upload } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -13,6 +13,7 @@ import PhotoGallery from '@/components/ui/PhotoGallery';
 import SafeContent from '@/components/ui/SafeContent';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/utils/api';
+import { compressImages, isImageFile } from '@/lib/utils/imageCompression';
 import {
   fadeInUp,
   staggerContainer,
@@ -32,12 +33,16 @@ export default function PlaceDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
+  const [reviewImages, setReviewImages] = useState<File[]>([]);
+  const [reviewImagePreviews, setReviewImagePreviews] = useState<string[]>([]);
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const REVIEW_MAX_LENGTH = 1000;
+  const MAX_REVIEW_IMAGES = 5;
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -65,6 +70,85 @@ export default function PlaceDetailPage() {
     }
   };
 
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+
+    if (files.length === 0) return;
+
+    // Validate file types
+    const invalidFiles = files.filter(file => !isImageFile(file));
+    if (invalidFiles.length > 0) {
+      showToast('Please select only image files (JPEG, PNG, GIF, WebP)', 'error');
+      return;
+    }
+
+    // Check total count
+    const totalImages = reviewImages.length + files.length;
+    if (totalImages > MAX_REVIEW_IMAGES) {
+      showToast(`Maximum ${MAX_REVIEW_IMAGES} images allowed`, 'warning');
+      return;
+    }
+
+    try {
+      // Compress images
+      const compressedFiles = await compressImages(files);
+
+      // Create previews
+      const newPreviews = await Promise.all(
+        compressedFiles.map(file => {
+          return new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+        })
+      );
+
+      setReviewImages(prev => [...prev, ...compressedFiles]);
+      setReviewImagePreviews(prev => [...prev, ...newPreviews]);
+    } catch (error) {
+      showToast('Failed to process images', 'error');
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setReviewImages(prev => prev.filter((_, i) => i !== index));
+    setReviewImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadReviewImages = async (): Promise<string[]> => {
+    if (reviewImages.length === 0) return [];
+
+    try {
+      setIsUploadingImages(true);
+      const formData = new FormData();
+      reviewImages.forEach(file => {
+        formData.append('files', file);
+      });
+
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/upload/multiple', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to upload images');
+      }
+
+      return data.data.files.map((file: any) => file.url);
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to upload images');
+    } finally {
+      setIsUploadingImages(false);
+    }
+  };
+
   const handleSubmitReview = async () => {
     if (!reviewData.comment.trim()) {
       showToast('Please add a comment to your review', 'warning');
@@ -73,14 +157,25 @@ export default function PlaceDetailPage() {
 
     try {
       setIsSubmittingReview(true);
+
+      // Upload images first if any
+      let imageUrls: string[] = [];
+      if (reviewImages.length > 0) {
+        imageUrls = await uploadReviewImages();
+      }
+
       await api.createReview({
         placeId: params.id,
         rating: reviewData.rating,
         comment: reviewData.comment,
+        images: imageUrls,
       });
+
       showToast('Review submitted successfully!', 'success');
       setShowReviewModal(false);
       setReviewData({ rating: 5, comment: '' });
+      setReviewImages([]);
+      setReviewImagePreviews([]);
       setHoverRating(0);
       loadPlaceDetails();
     } catch (error: any) {
@@ -363,6 +458,36 @@ export default function PlaceDetailPage() {
                           className="text-gray-700 ml-15 break-words leading-relaxed"
                         />
                       )}
+                      {review.images && review.images.length > 0 && (
+                        <div className="mt-3 ml-15 grid grid-cols-3 gap-2">
+                          {review.images.slice(0, 3).map((image: string, idx: number) => (
+                            <motion.img
+                              key={idx}
+                              src={image}
+                              alt={`Review image ${idx + 1}`}
+                              className="w-full aspect-square object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                              whileHover={{ scale: 1.05 }}
+                              onClick={() => {
+                                // Could open in lightbox/gallery
+                              }}
+                            />
+                          ))}
+                          {review.images.length > 3 && (
+                            <div className="relative">
+                              <img
+                                src={review.images[3]}
+                                alt="More images"
+                                className="w-full aspect-square object-cover rounded-lg opacity-70"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg">
+                                <span className="text-white font-bold text-lg">
+                                  +{review.images.length - 3}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </motion.div>
                   ))}
                 </motion.div>
@@ -434,6 +559,65 @@ export default function PlaceDetailPage() {
               onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
               maxLength={REVIEW_MAX_LENGTH}
             />
+          </motion.div>
+
+          {/* Image Upload */}
+          <motion.div variants={staggerItem}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Photos ({reviewImages.length}/{MAX_REVIEW_IMAGES})
+            </label>
+            <div className="space-y-3">
+              {/* Image Previews */}
+              {reviewImagePreviews.length > 0 && (
+                <div className="grid grid-cols-3 gap-3">
+                  {reviewImagePreviews.map((preview, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className="relative aspect-square rounded-lg overflow-hidden bg-gray-100"
+                    >
+                      <img
+                        src={preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+
+              {/* Upload Button */}
+              {reviewImages.length < MAX_REVIEW_IMAGES && (
+                <label className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-orange-500 hover:bg-orange-50 transition-all">
+                  <div className="flex items-center space-x-2 text-gray-600">
+                    <Upload className="w-5 h-5" />
+                    <span className="text-sm font-medium">
+                      {reviewImages.length === 0 ? 'Add Photos' : 'Add More Photos'}
+                    </span>
+                  </div>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    disabled={isSubmittingReview || isUploadingImages}
+                  />
+                </label>
+              )}
+              <p className="text-xs text-gray-500">
+                Accepted: JPEG, PNG, GIF, WebP (max {MAX_REVIEW_IMAGES} images, 5MB each)
+              </p>
+            </div>
           </motion.div>
 
           <motion.div variants={staggerItem} className="flex space-x-3 pt-4">
