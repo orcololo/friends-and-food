@@ -99,7 +99,7 @@ export default function DashboardPage() {
         prevPosts.map((post) => {
           if (post._id === postId) {
             const isLiked = post.likes?.some((like: any) =>
-              like._id === user?._id || like === user?._id
+              like && (like._id === user?._id || like === user?._id)
             );
 
             if (isLiked) {
@@ -107,7 +107,7 @@ export default function DashboardPage() {
               return {
                 ...post,
                 likes: post.likes.filter((like: any) =>
-                  (like._id || like) !== user?._id
+                  like && (like._id || like) !== user?._id
                 ),
               };
             } else {
@@ -125,7 +125,7 @@ export default function DashboardPage() {
       // Get current post state to determine action
       const currentPost = posts.find((p) => p._id === postId);
       const isLiked = currentPost?.likes?.some((like: any) =>
-        like._id === user?._id || like === user?._id
+        like && (like._id === user?._id || like === user?._id)
       );
 
       // Call API
@@ -400,7 +400,7 @@ export default function DashboardPage() {
                                 whileTap={{ scale: 0.95 }}
                                 className={`transition-colors flex items-center space-x-1 ${
                                   post.likes?.some((like: any) =>
-                                    (like._id || like) === user?._id
+                                    like && ((like._id || like) === user?._id)
                                   )
                                     ? 'text-red-500'
                                     : 'hover:text-red-500'
@@ -409,7 +409,7 @@ export default function DashboardPage() {
                                 <Heart
                                   className={`w-5 h-5 ${
                                     post.likes?.some((like: any) =>
-                                      (like._id || like) === user?._id
+                                      like && ((like._id || like) === user?._id)
                                     )
                                       ? 'fill-red-500'
                                       : ''
