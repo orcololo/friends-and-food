@@ -6,6 +6,7 @@ import Event from '@/lib/models/Event';
 import Group from '@/lib/models/Group';
 import { authenticate, AuthenticatedRequest } from '@/lib/middleware/auth';
 import { successResponse, errorResponse } from '@/lib/utils/response';
+import { escapeRegex, sanitizeInput } from '@/lib/utils/sanitize';
 
 // GET search across all resources
 async function getHandler(req: AuthenticatedRequest) {
@@ -13,7 +14,8 @@ async function getHandler(req: AuthenticatedRequest) {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
-    const query = searchParams.get('q') || '';
+    const rawQuery = searchParams.get('q') || '';
+    const query = sanitizeInput(rawQuery, 100); // Limit search query to 100 chars
     const type = searchParams.get('type') || 'all'; // all, users, places, events, groups
     const limit = parseInt(searchParams.get('limit') || '10');
 
@@ -21,7 +23,9 @@ async function getHandler(req: AuthenticatedRequest) {
       return errorResponse('Search query must be at least 2 characters', 400);
     }
 
-    const searchRegex = new RegExp(query, 'i');
+    // Escape special regex characters to prevent regex injection
+    const escapedQuery = escapeRegex(query);
+    const searchRegex = new RegExp(escapedQuery, 'i');
     const results: any = {};
 
     // Search users

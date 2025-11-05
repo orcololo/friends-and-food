@@ -9,16 +9,20 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import PhotoGallery from '@/components/ui/PhotoGallery';
+import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/utils/api';
 
 export default function PlaceDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const { showToast } = useToast();
   const [place, setPlace] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -32,10 +36,14 @@ export default function PlaceDetailPage() {
 
   const loadPlaceDetails = async () => {
     try {
+      setError(null);
       const data = await api.getPlace(params.id as string);
       setPlace(data.data.place);
       setReviews(data.data.reviews || []);
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to load place';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
       console.error('Failed to load place:', error);
     } finally {
       setIsLoading(false);
@@ -43,17 +51,26 @@ export default function PlaceDetailPage() {
   };
 
   const handleSubmitReview = async () => {
+    if (!reviewData.comment.trim()) {
+      showToast('Please add a comment to your review', 'warning');
+      return;
+    }
+
     try {
+      setIsSubmittingReview(true);
       await api.createReview({
         placeId: params.id,
         rating: reviewData.rating,
         comment: reviewData.comment,
       });
+      showToast('Review submitted successfully!', 'success');
       setShowReviewModal(false);
       setReviewData({ rating: 5, comment: '' });
       loadPlaceDetails();
     } catch (error: any) {
-      alert(error.message || 'Failed to submit review');
+      showToast(error.message || 'Failed to submit review', 'error');
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -219,13 +236,19 @@ export default function PlaceDetailPage() {
           </div>
 
           <div className="flex space-x-2">
-            <Button onClick={handleSubmitReview} className="flex-1">
-              Submit Review
+            <Button
+              onClick={handleSubmitReview}
+              className="flex-1"
+              isLoading={isSubmittingReview}
+              disabled={isSubmittingReview}
+            >
+              {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
             </Button>
             <Button
               onClick={() => setShowReviewModal(false)}
               variant="outline"
               className="flex-1"
+              disabled={isSubmittingReview}
             >
               Cancel
             </Button>
