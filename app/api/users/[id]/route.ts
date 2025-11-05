@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
+import mongoose from 'mongoose';
 import User from '@/lib/models/User';
 import Post from '@/lib/models/Post';
 import Review from '@/lib/models/Review';
@@ -13,11 +14,17 @@ async function getHandler(req: AuthenticatedRequest, { params }: { params: Promi
     await connectDB();
     const { id } = await params;
 
-    // Try to find by ID first, then by username
-    let user = await User.findById(id)
-      .select('-password')
-      .populate('friends', 'name username profileImage');
+    let user = null;
 
+    // Check if id is a valid ObjectId format (24 character hex string)
+    if (mongoose.Types.ObjectId.isValid(id) && id.length === 24) {
+      // Try to find by ID first
+      user = await User.findById(id)
+        .select('-password')
+        .populate('friends', 'name username profileImage');
+    }
+
+    // If not found by ID or invalid ID format, try by username
     if (!user) {
       user = await User.findOne({ username: id })
         .select('-password')
