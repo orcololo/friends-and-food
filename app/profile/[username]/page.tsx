@@ -1,14 +1,22 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Heart, MessageCircle, Star, Calendar } from 'lucide-react';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { Heart, MessageCircle, Star, Calendar, UserCheck, UserPlus, Mail, MapPin, Link as LinkIcon } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
+import {
+  fadeInUp,
+  staggerContainer,
+  staggerItem,
+  tabContent,
+  scaleIn,
+  skeletonPulse,
+} from '@/lib/utils/animations';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -106,10 +114,64 @@ export default function ProfilePage() {
     }
   };
 
+  // Animated counter
+  const AnimatedCounter = ({ value, label }: { value: number; label: string }) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+      let start = 0;
+      const end = value;
+      if (start === end) return;
+
+      const duration = 1000;
+      const increment = end / (duration / 16);
+      const timer = setInterval(() => {
+        start += increment;
+        if (start >= end) {
+          setCount(end);
+          clearInterval(timer);
+        } else {
+          setCount(Math.floor(start));
+        }
+      }, 16);
+
+      return () => clearInterval(timer);
+    }, [value]);
+
+    return (
+      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring' }}>
+        <span className="font-bold text-gray-800 text-xl">{count}</span>
+        <span className="text-gray-600 ml-2">{label}</span>
+      </motion.div>
+    );
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <motion.div
+            variants={skeletonPulse}
+            initial="initial"
+            animate="animate"
+            className="h-48 bg-gray-200 rounded-xl mb-6"
+          />
+          <div className="space-y-6">
+            <motion.div
+              variants={skeletonPulse}
+              initial="initial"
+              animate="animate"
+              className="h-16 bg-gray-200 rounded-xl"
+            />
+            <motion.div
+              variants={skeletonPulse}
+              initial="initial"
+              animate="animate"
+              className="h-96 bg-gray-200 rounded-xl"
+            />
+          </div>
+        </div>
       </div>
     );
   }
@@ -138,114 +200,207 @@ export default function ProfilePage() {
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          {/* Profile Header */}
-          <Card className="mb-6">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-6">
-                <div className="w-24 h-24 bg-orange-500 rounded-full flex items-center justify-center text-white text-4xl font-bold">
-                  {profile.user.name?.charAt(0)}
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-800 mb-1">
-                    {profile.user.name}
-                  </h1>
-                  <p className="text-lg text-gray-600 mb-3">@{profile.user.username}</p>
-                  {profile.user.bio && (
-                    <p className="text-gray-700 mb-4 max-w-2xl">{profile.user.bio}</p>
-                  )}
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          className="space-y-6"
+        >
+          {/* Profile Header with Backdrop Blur */}
+          <motion.div variants={staggerItem}>
+            <Card className="relative overflow-hidden bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 border-orange-200">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-orange-200 to-pink-200 rounded-full blur-3xl opacity-30 -mr-32 -mt-32" />
+              <div className="relative backdrop-blur-sm">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-6 flex-1">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 200 }}
+                      className="relative"
+                    >
+                      <div className="w-32 h-32 bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 rounded-full flex items-center justify-center text-white text-5xl font-bold shadow-2xl ring-4 ring-white">
+                        {profile.user.name?.charAt(0)}
+                      </div>
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2, type: 'spring' }}
+                        className="absolute -bottom-2 -right-2 w-10 h-10 bg-green-500 rounded-full border-4 border-white"
+                      />
+                    </motion.div>
+                    <div className="flex-1">
+                      <motion.h1
+                        variants={fadeInUp}
+                        className="text-4xl font-bold text-gray-800 mb-2"
+                      >
+                        {profile.user.name}
+                      </motion.h1>
+                      <motion.p
+                        variants={fadeInUp}
+                        className="text-xl text-gray-600 mb-3"
+                      >
+                        @{profile.user.username}
+                      </motion.p>
+                      {profile.user.bio && (
+                        <motion.p
+                          variants={fadeInUp}
+                          className="text-gray-700 mb-4 max-w-2xl leading-relaxed"
+                        >
+                          {profile.user.bio}
+                        </motion.p>
+                      )}
 
-                  {/* Stats */}
-                  <div className="flex items-center space-x-6 text-sm">
-                    <div>
-                      <span className="font-bold text-gray-800">{profile.stats.friendsCount}</span>
-                      <span className="text-gray-600 ml-1">Friends</span>
-                    </div>
-                    <div>
-                      <span className="font-bold text-gray-800">{profile.stats.postsCount}</span>
-                      <span className="text-gray-600 ml-1">Posts</span>
-                    </div>
-                    <div>
-                      <span className="font-bold text-gray-800">{profile.stats.reviewsCount}</span>
-                      <span className="text-gray-600 ml-1">Reviews</span>
-                    </div>
-                    <div>
-                      <span className="font-bold text-gray-800">{profile.stats.eventsCount}</span>
-                      <span className="text-gray-600 ml-1">Events</span>
+                      {/* Animated Stats */}
+                      <motion.div
+                        variants={staggerContainer}
+                        className="flex items-center space-x-8"
+                      >
+                        <AnimatedCounter value={profile.stats.friendsCount} label="Friends" />
+                        <AnimatedCounter value={profile.stats.postsCount} label="Posts" />
+                        <AnimatedCounter value={profile.stats.reviewsCount} label="Reviews" />
+                        <AnimatedCounter value={profile.stats.eventsCount} label="Events" />
+                      </motion.div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="space-x-2">
-                {isOwnProfile ? (
-                  <Button onClick={() => setShowEditModal(true)}>Edit Profile</Button>
-                ) : (
-                  <>
-                    {isFriend ? (
-                      <Button variant="outline">Friends ✓</Button>
+                  <motion.div variants={scaleIn} className="flex items-center space-x-2">
+                    {isOwnProfile ? (
+                      <Button onClick={() => setShowEditModal(true)}>Edit Profile</Button>
                     ) : (
-                      <Button onClick={handleAddFriend}>Add Friend</Button>
+                      <>
+                        <AnimatePresence mode="wait">
+                          {isFriend ? (
+                            <motion.div
+                              key="friend"
+                              initial={{ scale: 0.8, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0.8, opacity: 0 }}
+                            >
+                              <Button variant="outline">
+                                <UserCheck className="w-4 h-4 mr-2" />
+                                Friends
+                              </Button>
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="not-friend"
+                              initial={{ scale: 0.8, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0.8, opacity: 0 }}
+                            >
+                              <Button onClick={handleAddFriend}>
+                                <UserPlus className="w-4 h-4 mr-2" />
+                                Add Friend
+                              </Button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                        <Button variant="outline">
+                          <Mail className="w-4 h-4 mr-2" />
+                          Message
+                        </Button>
+                      </>
                     )}
-                    <Button variant="outline">Message</Button>
-                  </>
-                )}
+                  </motion.div>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </motion.div>
 
-          {/* Tabs */}
-          <Card className="mb-6">
-            <div className="flex space-x-6 border-b">
-              {(['posts', 'reviews', 'events', 'friends'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`pb-3 px-2 capitalize ${
-                    activeTab === tab
-                      ? 'border-b-2 border-orange-500 text-orange-500 font-semibold'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-          </Card>
+          {/* Tabs with Animated Underline */}
+          <motion.div variants={staggerItem}>
+            <Card>
+              <div className="flex space-x-6 border-b relative">
+                {(['posts', 'reviews', 'events', 'friends'] as const).map((tab) => (
+                  <motion.button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`pb-3 px-4 capitalize relative transition-colors ${
+                      activeTab === tab
+                        ? 'text-orange-500 font-semibold'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {tab}
+                    {activeTab === tab && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500"
+                        initial={false}
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                  </motion.button>
+                ))}
+              </div>
+            </Card>
+          </motion.div>
 
-          {/* Tab Content */}
-          {activeTab === 'posts' && (
-            <div className="space-y-4">
-              {profile.posts && profile.posts.length > 0 ? (
-                profile.posts.map((post: any) => (
-                  <Card key={post._id} hover>
-                    <p className="text-gray-700 mb-2">{post.content}</p>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <span className="flex items-center space-x-1">
-                        <Heart className="w-4 h-4" />
-                        <span>{post.likes?.length || 0}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <MessageCircle className="w-4 h-4" />
-                        <span>{post.comments?.length || 0}</span>
-                      </span>
-                      <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </Card>
-                ))
-              ) : (
-                <Card>
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No posts yet</p>
-                  </div>
-                </Card>
-              )}
-            </div>
-          )}
+          {/* Tab Content with Smooth Transitions */}
+          <AnimatePresence mode="wait">
+            {activeTab === 'posts' && (
+              <motion.div
+                key="posts"
+                variants={tabContent}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="space-y-4"
+              >
+                {profile.posts && profile.posts.length > 0 ? (
+                  <motion.div variants={staggerContainer} className="space-y-4">
+                    {profile.posts.map((post: any, index: number) => (
+                      <motion.div key={post._id} variants={staggerItem} custom={index}>
+                        <Card hover>
+                          <p className="text-gray-700 mb-3 leading-relaxed">{post.content}</p>
+                          <div className="flex items-center space-x-6 text-sm text-gray-500">
+                            <motion.span
+                              className="flex items-center space-x-2 cursor-pointer hover:text-red-500 transition-colors"
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                            >
+                              <Heart className="w-4 h-4" />
+                              <span className="font-medium">{post.likes?.length || 0}</span>
+                            </motion.span>
+                            <motion.span
+                              className="flex items-center space-x-2 cursor-pointer hover:text-blue-500 transition-colors"
+                              whileHover={{ scale: 1.1 }}
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              <span className="font-medium">{post.comments?.length || 0}</span>
+                            </motion.span>
+                            <span className="text-xs">{new Date(post.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                ) : (
+                  <motion.div variants={fadeInUp}>
+                    <Card>
+                      <div className="text-center py-12">
+                        <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                        <p className="text-gray-500">No posts yet</p>
+                      </div>
+                    </Card>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
 
-          {activeTab === 'reviews' && (
-            <div className="space-y-4">
-              {profile.reviews && profile.reviews.length > 0 ? (
+            {activeTab === 'reviews' && (
+              <motion.div
+                key="reviews"
+                variants={tabContent}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="space-y-4"
+              >
+                {profile.reviews && profile.reviews.length > 0 ? (
                 profile.reviews.map((review: any) => (
                   <Card key={review._id} hover>
                     <div className="flex items-start justify-between mb-2">
@@ -273,12 +428,19 @@ export default function ProfilePage() {
                     <p className="text-gray-500">No reviews yet</p>
                   </div>
                 </Card>
-              )}
-            </div>
-          )}
+                )}
+              </motion.div>
+            )}
 
-          {activeTab === 'events' && (
-            <div className="space-y-4">
+            {activeTab === 'events' && (
+              <motion.div
+                key="events"
+                variants={tabContent}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="space-y-4"
+              >
               {profile.events && profile.events.length > 0 ? (
                 profile.events.map((event: any) => (
                   <Card key={event._id} hover>
@@ -300,12 +462,19 @@ export default function ProfilePage() {
                     <p className="text-gray-500">No events organized yet</p>
                   </div>
                 </Card>
-              )}
-            </div>
-          )}
+                )}
+              </motion.div>
+            )}
 
-          {activeTab === 'friends' && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {activeTab === 'friends' && (
+              <motion.div
+                key="friends"
+                variants={tabContent}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+              >
               {profile.user.friends && profile.user.friends.length > 0 ? (
                 profile.user.friends.map((friend: any) => (
                   <Card
@@ -331,9 +500,10 @@ export default function ProfilePage() {
                     </div>
                   </Card>
                 </div>
-              )}
-            </div>
-          )}
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
 

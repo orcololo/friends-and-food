@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell } from 'lucide-react';
 import { initSocket, getSocket } from '@/lib/utils/socket-client';
+import { staggerContainer, staggerItem } from '@/lib/utils/animations';
 
 interface Notification {
   _id: string;
@@ -22,6 +23,7 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [hasNewNotification, setHasNewNotification] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -34,6 +36,9 @@ export default function NotificationBell() {
     socket.on('notification', (data: any) => {
       setNotifications((prev) => [data.notification, ...prev]);
       setUnreadCount((prev) => prev + 1);
+      // Trigger shake animation
+      setHasNewNotification(true);
+      setTimeout(() => setHasNewNotification(false), 1000);
     });
 
     // Load notifications
@@ -95,59 +100,87 @@ export default function NotificationBell() {
 
   return (
     <div className="relative">
-      <button
+      <motion.button
         onClick={() => setIsOpen(!isOpen)}
+        animate={hasNewNotification ? {
+          rotate: [0, -15, 15, -15, 15, 0],
+          transition: { duration: 0.5 }
+        } : {}}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
         className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
       >
         <Bell className="w-6 h-6 text-gray-700" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+            className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg"
+          >
             {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
+          </motion.span>
         )}
-      </button>
+      </motion.button>
 
       <AnimatePresence>
         {isOpen && (
           <>
-            <div
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="fixed inset-0 z-30"
               onClick={() => setIsOpen(false)}
             />
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl z-40 overflow-hidden"
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="absolute right-0 mt-2 w-96 bg-white/95 backdrop-blur-lg rounded-xl shadow-2xl z-40 overflow-hidden border border-gray-100"
             >
-              <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-red-50">
                 <h3 className="font-semibold text-gray-800">Notifications</h3>
                 {unreadCount > 0 && (
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={markAllAsRead}
-                    className="text-sm text-orange-500 hover:text-orange-600"
+                    className="text-sm text-orange-500 hover:text-orange-600 font-medium"
                   >
                     Mark all read
-                  </button>
+                  </motion.button>
                 )}
               </div>
 
-              <div className="max-h-96 overflow-y-auto">
+              <motion.div
+                variants={staggerContainer}
+                initial="initial"
+                animate="animate"
+                className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-transparent"
+              >
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500">
-                    No notifications yet
-                  </div>
+                  <motion.div
+                    variants={staggerItem}
+                    className="p-8 text-center text-gray-500"
+                  >
+                    <Bell className="w-16 h-16 mx-auto mb-3 text-gray-300" />
+                    <p>No notifications yet</p>
+                  </motion.div>
                 ) : (
-                  notifications.map((notification) => (
-                    <div
+                  notifications.map((notification, index) => (
+                    <motion.div
                       key={notification._id}
+                      variants={staggerItem}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(249, 115, 22, 0.05)' }}
                       onClick={() => {
                         if (!notification.isRead) {
                           markAsRead(notification._id);
                         }
                       }}
-                      className={`p-4 border-b hover:bg-gray-50 cursor-pointer transition-colors ${
-                        !notification.isRead ? 'bg-orange-50' : ''
+                      className={`p-4 border-b border-gray-100 cursor-pointer transition-colors ${
+                        !notification.isRead ? 'bg-orange-50/50' : 'bg-white'
                       }`}
                     >
                       <div className="flex items-start space-x-3">
@@ -163,13 +196,18 @@ export default function NotificationBell() {
                           </p>
                         </div>
                         {!notification.isRead && (
-                          <div className="w-2 h-2 bg-orange-500 rounded-full mt-2" />
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: 'spring', stiffness: 400 }}
+                            className="w-2 h-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-full mt-2 shadow-lg"
+                          />
                         )}
                       </div>
-                    </div>
+                    </motion.div>
                   ))
                 )}
-              </div>
+              </motion.div>
             </motion.div>
           </>
         )}

@@ -73,29 +73,73 @@ export default function LazyImage({
 
   return (
     <motion.div
-      className="relative overflow-hidden"
+      className="relative overflow-hidden bg-gray-100"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <img
+      {/* Blur-up technique: Show blurred placeholder first */}
+      {!isLoaded && !hasError && imageSrc !== placeholder && (
+        <motion.img
+          src={placeholder}
+          alt={alt}
+          className={`${className} absolute inset-0 blur-md scale-110`}
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 0.6 }}
+        />
+      )}
+
+      {/* Main image */}
+      <motion.img
         ref={setImageRef}
         src={imageSrc}
         alt={alt}
-        className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+        className={className}
+        initial={{ opacity: 0, filter: 'blur(10px)' }}
+        animate={{
+          opacity: isLoaded ? 1 : 0,
+          filter: isLoaded ? 'blur(0px)' : 'blur(10px)',
+        }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
         onLoad={handleLoad}
         onError={handleError}
         loading="lazy"
       />
 
+      {/* Loading skeleton */}
       {!isLoaded && !hasError && (
-        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"
+          animate={{
+            backgroundPosition: ['0% 0%', '100% 0%', '0% 0%'],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
+          style={{
+            backgroundSize: '200% 100%',
+          }}
+        />
       )}
 
+      {/* Error state */}
       {hasError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400">
-          <ImageIcon className="w-12 h-12 text-gray-400" strokeWidth={1.5} />
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-400"
+        >
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 200 }}
+          >
+            <ImageIcon className="w-12 h-12 text-gray-400" strokeWidth={1.5} />
+          </motion.div>
+          <p className="text-sm mt-2">Failed to load image</p>
+        </motion.div>
       )}
     </motion.div>
   );

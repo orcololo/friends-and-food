@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -35,43 +36,57 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
     <AnimatePresence>
       {isOpen && (
         <>
+          {/* Enhanced Backdrop with Blur */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
           />
+
+          {/* Modal Container */}
           <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className={`bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]}`}
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                  y: 0,
+                  transition: {
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 30
+                  }
+                }}
+                exit={{
+                  opacity: 0,
+                  scale: 0.9,
+                  y: 20,
+                  transition: {
+                    duration: 0.2
+                  }
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className={`bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} overflow-hidden`}
               >
                 {title && (
-                  <div className="flex items-center justify-between p-4 border-b">
-                    <h3 className="text-lg font-semibold">{title}</h3>
-                    <button
+                  <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-orange-50 to-pink-50">
+                    <h3 className="text-2xl font-bold text-gray-800">{title}</h3>
+                    <motion.button
                       onClick={onClose}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      whileHover={{ scale: 1.1, rotate: 90 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white rounded-full transition-colors"
+                      aria-label="Close modal"
                     >
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                      <X className="w-6 h-6" />
+                    </motion.button>
                   </div>
                 )}
-                <div className="p-4">{children}</div>
+                <div className="p-6">{children}</div>
               </motion.div>
             </div>
           </div>

@@ -118,9 +118,91 @@ export default function MapView({
         .custom-marker {
           background: transparent;
           border: none;
+          animation: markerPulse 2s ease-in-out infinite;
         }
+
+        @keyframes markerPulse {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.1);
+            opacity: 0.8;
+          }
+        }
+
+        .custom-marker:hover {
+          animation: markerBounce 0.5s ease-in-out;
+          z-index: 1000 !important;
+        }
+
+        @keyframes markerBounce {
+          0%, 100% {
+            transform: translateY(0) scale(1);
+          }
+          50% {
+            transform: translateY(-10px) scale(1.2);
+          }
+        }
+
         .leaflet-popup-content-wrapper {
-          border-radius: 8px;
+          border-radius: 12px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+          animation: popupSlideIn 0.3s ease-out;
+          background: linear-gradient(to bottom right, #ffffff, #fef3f2);
+          border: 2px solid rgba(249, 115, 22, 0.1);
+        }
+
+        @keyframes popupSlideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        .leaflet-popup-tip {
+          background: linear-gradient(to bottom right, #ffffff, #fef3f2);
+        }
+
+        .leaflet-popup-close-button {
+          color: #f97316 !important;
+          font-size: 24px !important;
+          font-weight: bold;
+          transition: transform 0.2s ease;
+        }
+
+        .leaflet-popup-close-button:hover {
+          color: #ea580c !important;
+          transform: rotate(90deg) scale(1.1);
+        }
+
+        /* Marker shadow pulse */
+        .custom-marker::after {
+          content: '';
+          position: absolute;
+          bottom: -10px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 20px;
+          height: 10px;
+          background: radial-gradient(ellipse, rgba(0, 0, 0, 0.3), transparent);
+          animation: shadowPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes shadowPulse {
+          0%, 100% {
+            transform: translateX(-50%) scale(1);
+            opacity: 0.3;
+          }
+          50% {
+            transform: translateX(-50%) scale(1.2);
+            opacity: 0.5;
+          }
         }
       `}</style>
     </div>

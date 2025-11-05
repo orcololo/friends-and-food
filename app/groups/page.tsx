@@ -59,97 +59,185 @@ export default function GroupsPage() {
     loadGroups(currentPage);
   };
 
+  // Skeleton loader component
+  const GroupSkeleton = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+    >
+      <div className="aspect-video bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
+      <div className="p-4 space-y-3">
+        <div className="h-6 bg-gray-200 rounded animate-pulse w-3/4" />
+        <div className="h-4 bg-gray-200 rounded animate-pulse w-full" />
+        <div className="h-4 bg-gray-200 rounded animate-pulse w-2/3" />
+        <div className="flex justify-between">
+          <div className="h-4 bg-gray-200 rounded animate-pulse w-20" />
+          <div className="h-4 bg-gray-200 rounded animate-pulse w-24" />
+        </div>
+        <div className="h-10 bg-gray-200 rounded animate-pulse w-full" />
+      </div>
+    </motion.div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50">
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex items-center justify-between mb-8"
+        >
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Your Groups</h1>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-2">
+              Your Groups
+            </h1>
             <p className="text-gray-600">Food communities and dining circles</p>
           </div>
-          <Button onClick={() => router.push('/groups/new')}>Create Group</Button>
-        </div>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button onClick={() => router.push('/groups/new')}>Create Group</Button>
+          </motion.div>
+        </motion.div>
 
-        {/* Loading State */}
+        {/* Loading State with Skeletons */}
         {isLoading && (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <GroupSkeleton key={i} />
+            ))}
           </div>
         )}
 
         {/* Error State */}
         {error && !isLoading && (
-          <Card>
-            <div className="text-center py-12">
-              <span className="text-6xl mb-4 inline-block">⚠️</span>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Oops! Something went wrong</h3>
-              <p className="text-gray-600 mb-6">{error}</p>
-              <Button onClick={handleRetry}>Try Again</Button>
-            </div>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+          >
+            <Card>
+              <div className="text-center py-12">
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                  className="text-6xl mb-4 inline-block"
+                >
+                  ⚠️
+                </motion.span>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Oops! Something went wrong</h3>
+                <p className="text-gray-600 mb-6">{error}</p>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button onClick={handleRetry}>Try Again</Button>
+                </motion.div>
+              </div>
+            </Card>
+          </motion.div>
         )}
 
         {/* Empty State */}
         {!isLoading && !error && groups.length === 0 && (
-          <Card>
-            <div className="text-center py-12">
-              <Users className="w-24 h-24 mx-auto mb-4 text-gray-300" strokeWidth={1.5} />
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">No groups yet</h3>
-              <p className="text-gray-600 mb-6">Create a group to start planning together!</p>
-              <Button onClick={() => router.push('/groups/new')}>Create First Group</Button>
-            </div>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+          >
+            <Card>
+              <div className="text-center py-16">
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                >
+                  <Users className="w-24 h-24 mx-auto mb-6 text-orange-300" strokeWidth={1.5} />
+                </motion.div>
+                <h3 className="text-2xl font-semibold text-gray-800 mb-2">No groups yet</h3>
+                <p className="text-gray-600 mb-8">Create a group to start planning together!</p>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button onClick={() => router.push('/groups/new')}>Create First Group</Button>
+                </motion.div>
+              </div>
+            </Card>
+          </motion.div>
         )}
 
         {/* Groups Grid */}
         {!isLoading && !error && groups.length > 0 && (
           <>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <motion.div
+              initial="initial"
+              animate="animate"
+              variants={{
+                initial: {},
+                animate: { transition: { staggerChildren: 0.08 } }
+              }}
+              className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
+            >
               {groups.map((group, index) => (
                 <motion.div
                   key={group._id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
+                  variants={{
+                    initial: { opacity: 0, y: 30, scale: 0.95 },
+                    animate: { opacity: 1, y: 0, scale: 1 }
+                  }}
+                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
                   onClick={() => router.push(`/groups/${group._id}`)}
-                  className="cursor-pointer"
+                  className="cursor-pointer group"
                 >
-                  <Card hover className="h-full">
-                    <div className="aspect-video bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-4 flex items-center justify-center">
+                  <div className="bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden h-full border border-gray-100">
+                    <div className="aspect-video bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100 relative overflow-hidden">
                       {group.coverImage ? (
                         <img
                           src={group.coverImage}
                           alt={group.name}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                       ) : (
-                        <Users className="w-16 h-16 text-purple-300" strokeWidth={1.5} />
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Users className="w-20 h-20 text-purple-300 group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
+                        </div>
                       )}
                     </div>
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-xl font-semibold text-gray-800">{group.name}</h3>
-                      {group.isPrivate && (
-                        <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
-                          Private
-                        </span>
+                    <div className="p-5">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-xl font-bold text-gray-800 group-hover:text-orange-600 transition-colors">
+                          {group.name}
+                        </h3>
+                        {group.isPrivate && (
+                          <motion.span
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="text-xs bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 px-2.5 py-1 rounded-full font-medium"
+                          >
+                            Private
+                          </motion.span>
+                        )}
+                      </div>
+                      {group.description && (
+                        <p className="text-gray-600 mb-4 line-clamp-2 text-sm leading-relaxed">
+                          {group.description}
+                        </p>
                       )}
+                      <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                        <span className="font-medium">{group.members?.length || 0} members</span>
+                        <span className="text-xs">by {group.createdBy?.name}</span>
+                      </div>
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Button variant="outline" className="w-full group-hover:bg-orange-50 group-hover:text-orange-600 group-hover:border-orange-200 transition-colors">
+                          View Group
+                        </Button>
+                      </motion.div>
                     </div>
-                    {group.description && (
-                      <p className="text-gray-600 mb-4 line-clamp-2">{group.description}</p>
-                    )}
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                      <span>{group.members?.length || 0} members</span>
-                      <span>by {group.createdBy?.name}</span>
-                    </div>
-                    <Button variant="outline" className="w-full">
-                      View Group
-                    </Button>
-                  </Card>
+                  </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
 
             {/* Pagination */}
             <Pagination

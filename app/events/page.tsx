@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Users, User, Clock } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
@@ -10,6 +10,14 @@ import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/utils/api';
+import {
+  fadeInUp,
+  slideInLeft,
+  staggerContainer,
+  staggerItem,
+  pageTransition,
+  skeletonPulse,
+} from '@/lib/utils/animations';
 
 export default function EventsPage() {
   const router = useRouter();
@@ -76,122 +84,195 @@ export default function EventsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <motion.div
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      variants={pageTransition}
+      className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100"
+    >
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4"
+        >
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Upcoming Events</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">Upcoming Events</h1>
             <p className="text-gray-600">Join dining events with friends</p>
           </div>
           <Button onClick={() => router.push('/events/new')}>Create Event</Button>
-        </div>
+        </motion.div>
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && !isLoading && (
-          <Card>
-            <div className="text-center py-12">
-              <span className="text-6xl mb-4 inline-block">⚠️</span>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Oops! Something went wrong</h3>
-              <p className="text-gray-600 mb-6">{error}</p>
-              <Button onClick={handleRetry}>Try Again</Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Empty State */}
-        {!isLoading && !error && events.length === 0 && (
-          <Card>
-            <div className="text-center py-12">
-              <Calendar className="w-24 h-24 mx-auto mb-4 text-gray-300" strokeWidth={1.5} />
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">No events yet</h3>
-              <p className="text-gray-600 mb-6">Create your first dining event!</p>
-              <Button onClick={() => router.push('/events/new')}>Create First Event</Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Events List */}
-        {!isLoading && !error && events.length > 0 && (
-          <>
-            <div className="space-y-4 mb-8">
-              {events.map((event, index) => (
+        <AnimatePresence mode="wait">
+          {/* Loading State with Skeleton */}
+          {isLoading && (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-4"
+            >
+              {[...Array(5)].map((_, index) => (
                 <motion.div
-                  key={event._id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  key={index}
+                  variants={skeletonPulse}
+                  initial="initial"
+                  animate="animate"
+                  className="bg-white rounded-lg shadow-md border border-gray-200 p-6"
                 >
-                  <Card hover>
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                      <div
-                        className="flex-1 cursor-pointer"
-                        onClick={() => router.push(`/events/${event._id}`)}
-                      >
-                        <div className="flex items-center space-x-3 mb-3">
-                          <Calendar className="w-10 h-10 text-orange-500" strokeWidth={1.5} />
-                          <div>
-                            <h3 className="text-xl font-semibold text-gray-800">{event.title}</h3>
-                            <p className="text-gray-600">{event.placeId?.name}</p>
-                          </div>
-                        </div>
-
-                        {event.description && (
-                          <p className="text-gray-600 mb-3 line-clamp-2">{event.description}</p>
-                        )}
-
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                          <div className="flex items-center space-x-1">
-                            <Clock className="w-4 h-4" />
-                            <span>{new Date(event.date).toLocaleDateString()}</span>
-                            <span>at {event.time}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Users className="w-4 h-4" />
-                            <span>{event.attendees?.length || 0} attending</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <User className="w-4 h-4" />
-                            <span>by {event.organizer?.name}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 md:mt-0 md:ml-6">
-                        <Button
-                          onClick={() => handleAttend(event._id)}
-                          isLoading={loadingEventId === event._id}
-                          disabled={loadingEventId === event._id}
-                        >
-                          {loadingEventId === event._id ? 'RSVPing...' : 'RSVP'}
-                        </Button>
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-gray-200 rounded-full" />
+                    <div className="flex-1 space-y-3">
+                      <div className="h-6 bg-gray-200 rounded w-1/3" />
+                      <div className="h-4 bg-gray-200 rounded w-1/4" />
+                      <div className="h-4 bg-gray-200 rounded w-full" />
+                      <div className="flex gap-4">
+                        <div className="h-4 bg-gray-200 rounded w-24" />
+                        <div className="h-4 bg-gray-200 rounded w-24" />
+                        <div className="h-4 bg-gray-200 rounded w-24" />
                       </div>
                     </div>
-                  </Card>
+                  </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
+          )}
 
-            {/* Pagination */}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              isLoading={isLoading}
-            />
-          </>
-        )}
+          {/* Error State */}
+          {error && !isLoading && (
+            <motion.div key="error" variants={fadeInUp} initial="initial" animate="animate" exit="exit">
+              <Card shadow="lg" padding="lg">
+                <div className="text-center py-12">
+                  <motion.span
+                    className="text-6xl mb-4 inline-block"
+                    animate={{ rotate: [0, -10, 10, -10, 0] }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    ⚠️
+                  </motion.span>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">Oops! Something went wrong</h3>
+                  <p className="text-gray-600 mb-6">{error}</p>
+                  <Button onClick={handleRetry}>Try Again</Button>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Empty State */}
+          {!isLoading && !error && events.length === 0 && (
+            <motion.div key="empty" variants={fadeInUp} initial="initial" animate="animate" exit="exit">
+              <Card shadow="lg" padding="lg" background="gradient">
+                <div className="text-center py-12">
+                  <motion.div
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <Calendar className="w-24 h-24 mx-auto mb-4 text-gray-300" strokeWidth={1.5} />
+                  </motion.div>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">No events yet</h3>
+                  <p className="text-gray-600 mb-6">Create your first dining event!</p>
+                  <Button onClick={() => router.push('/events/new')}>Create First Event</Button>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Events List */}
+          {!isLoading && !error && events.length > 0 && (
+            <motion.div key="events" initial="initial" animate="animate" exit="exit">
+              <motion.div variants={staggerContainer} className="space-y-4 mb-8">
+                {events.map((event) => (
+                  <motion.div key={event._id} variants={staggerItem}>
+                    <Card
+                      hover
+                      shadow="lg"
+                      padding="lg"
+                      className="backdrop-blur-sm transition-all duration-300"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                        <motion.div
+                          className="flex-1 cursor-pointer"
+                          onClick={() => router.push(`/events/${event._id}`)}
+                          whileHover={{ x: 4 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <div className="flex items-center space-x-3 mb-3">
+                            <motion.div
+                              whileHover={{ rotate: 5, scale: 1.1 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <Calendar className="w-10 h-10 text-orange-500" strokeWidth={1.5} />
+                            </motion.div>
+                            <div>
+                              <h3 className="text-xl font-semibold text-gray-800">{event.title}</h3>
+                              <p className="text-gray-600 font-medium">{event.placeId?.name}</p>
+                            </div>
+                          </div>
+
+                          {event.description && (
+                            <p className="text-gray-600 mb-3 line-clamp-2">{event.description}</p>
+                          )}
+
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                            <div className="flex items-center space-x-1.5">
+                              <Clock className="w-4 h-4 text-orange-500" />
+                              <span className="font-medium">{new Date(event.date).toLocaleDateString()}</span>
+                              <span>at</span>
+                              <span className="font-medium">{event.time}</span>
+                            </div>
+                            <div className="flex items-center space-x-1.5">
+                              <Users className="w-4 h-4 text-orange-500" />
+                              <span className="font-medium">{event.attendees?.length || 0}</span>
+                              <span>attending</span>
+                            </div>
+                            <div className="flex items-center space-x-1.5">
+                              <User className="w-4 h-4 text-orange-500" />
+                              <span>by</span>
+                              <span className="font-medium">{event.organizer?.name}</span>
+                            </div>
+                          </div>
+                        </motion.div>
+
+                        <motion.div
+                          className="flex-shrink-0"
+                          whileHover={{ scale: 1.05 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Button
+                            onClick={() => handleAttend(event._id)}
+                            isLoading={loadingEventId === event._id}
+                            disabled={loadingEventId === event._id}
+                            className="w-full md:w-auto"
+                          >
+                            {loadingEventId === event._id ? 'RSVPing...' : 'RSVP'}
+                          </Button>
+                        </motion.div>
+                      </div>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+
+              {/* Pagination */}
+              <motion.div variants={fadeInUp}>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={handlePageChange}
+                  isLoading={isLoading}
+                />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }
