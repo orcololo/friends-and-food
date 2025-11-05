@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, Calendar, Users, TrendingUp, Clock } from 'lucide-react';
+import { Heart, MessageCircle, Calendar, Users, TrendingUp, Clock, Trash2, Edit3, Share2, MoreVertical } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -35,6 +35,11 @@ export default function DashboardPage() {
   const [commentContent, setCommentContent] = useState('');
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [postToEdit, setPostToEdit] = useState<any>(null);
+  const [editContent, setEditContent] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -191,6 +196,69 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDeletePost = async () => {
+    if (!postToDelete) return;
+
+    try {
+      await api.deletePost(postToDelete);
+      setPosts((prev) => prev.filter((p) => p._id !== postToDelete));
+      showToast('Post deleted successfully', 'success');
+      setShowDeleteModal(false);
+      setPostToDelete(null);
+    } catch (error: any) {
+      showToast(error.message || 'Failed to delete post', 'error');
+    }
+  };
+
+  const handleEditPost = async () => {
+    if (!postToEdit || !editContent.trim()) {
+      showToast('Please enter some content', 'warning');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const response = await api.updatePost(postToEdit._id, editContent);
+      setPosts((prev) =>
+        prev.map((p) => (p._id === postToEdit._id ? { ...p, content: editContent, editedAt: new Date() } : p))
+      );
+      showToast('Post updated successfully!', 'success');
+      setShowEditModal(false);
+      setPostToEdit(null);
+      setEditContent('');
+    } catch (error: any) {
+      showToast(error.message || 'Failed to update post', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSharePost = async (post: any) => {
+    const url = `${window.location.origin}/posts/${post._id}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Check out this post on Friends & Food',
+          text: post.content.substring(0, 100) + '...',
+          url: url,
+        });
+      } catch (err) {
+        // User cancelled or error
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      showToast('Link copied to clipboard!', 'success');
+    }
+  };
+
+  const canEditPost = (post: any) => {
+    if (post.userId._id !== user?._id && post.userId !== user?._id) return false;
+    const fifteenMinutes = 15 * 60 * 1000;
+    const postAge = Date.now() - new Date(post.createdAt).getTime();
+    return postAge <= fifteenMinutes;
+  };
+
   if (isLoading) {
     return (
       <motion.div
@@ -286,9 +354,43 @@ export default function DashboardPage() {
                             {post.userId?.name?.charAt(0)}
                           </motion.div>
                           <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <h3 className="font-semibold text-gray-800">{post.userId?.name}</h3>
-                              <span className="text-gray-400 text-sm">@{post.userId?.username}</span>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-2">
+                                <h3 className="font-semibold text-gray-800">{post.userId?.name}</h3>
+                                <span className="text-gray-400 text-sm">@{post.userId?.username}</span>
+                                {post.editedAt && (
+                                  <span className="text-gray-400 text-xs italic">(edited)</span>
+                                )}
+                              </div>
+                              {(post.userId._id === user?._id || post.userId === user?._id) && (
+                                <div className="flex items-center space-x-2">
+                                  {canEditPost(post) && (
+                                    <motion.button
+                                      whileHover={{ scale: 1.1 }}
+                                      whileTap={{ scale: 0.95 }}
+                                      onClick={() => {
+                                        setPostToEdit(post);
+                                        setEditContent(post.content);
+                                        setShowEditModal(true);
+                                      }}
+                                      className="text-gray-400 hover:text-blue-500 transition-colors"
+                                    >
+                                      <Edit3 className="w-4 h-4" />
+                                    </motion.button>
+                                  )}
+                                  <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                      setPostToDelete(post._id);
+                                      setShowDeleteModal(true);
+                                    }}
+                                    className="text-gray-400 hover:text-red-500 transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </motion.button>
+                                </div>
+                              )}
                             </div>
                             <p className="text-gray-700 mb-3">{post.content}</p>
                             <div className="flex items-center space-x-4 text-gray-500">
@@ -323,6 +425,14 @@ export default function DashboardPage() {
                               >
                                 <MessageCircle className="w-5 h-5" />
                                 <span className="font-medium">{post.comments?.length || 0}</span>
+                              </motion.button>
+                              <motion.button
+                                onClick={() => handleSharePost(post)}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="hover:text-green-500 transition-colors flex items-center space-x-1"
+                              >
+                                <Share2 className="w-5 h-5" />
                               </motion.button>
                             </div>
                           </div>
@@ -605,6 +715,100 @@ export default function DashboardPage() {
                 ))}
               </AnimatePresence>
             )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Post Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setPostToDelete(null);
+        }}
+        title="Delete Post"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">Are you sure you want to delete this post? This action cannot be undone.</p>
+          <div className="flex space-x-3">
+            <Button
+              onClick={handleDeletePost}
+              variant="primary"
+              className="flex-1 bg-red-500 hover:bg-red-600"
+            >
+              Delete
+            </Button>
+            <Button
+              onClick={() => {
+                setShowDeleteModal(false);
+                setPostToDelete(null);
+              }}
+              variant="outline"
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Post Modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setPostToEdit(null);
+          setEditContent('');
+        }}
+        title="Edit Post"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="edit-content" className="block text-sm font-medium text-gray-700 mb-2">
+              Post Content
+            </label>
+            <textarea
+              id="edit-content"
+              rows={5}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+              placeholder="Edit your post..."
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              maxLength={1000}
+            />
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-sm text-gray-500">
+                {editContent.length}/1000 characters
+              </span>
+              <span className="text-xs text-gray-400">
+                Posts can only be edited within 15 minutes
+              </span>
+            </div>
+          </div>
+
+          <div className="flex space-x-3">
+            <Button
+              onClick={handleEditPost}
+              isLoading={isSubmitting}
+              disabled={isSubmitting || !editContent.trim()}
+              className="flex-1"
+            >
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+            <Button
+              onClick={() => {
+                setShowEditModal(false);
+                setPostToEdit(null);
+                setEditContent('');
+              }}
+              variant="outline"
+              className="flex-1"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
           </div>
         </div>
       </Modal>

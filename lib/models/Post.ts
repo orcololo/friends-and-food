@@ -13,6 +13,7 @@ export interface IPost extends Document {
   placeId?: mongoose.Types.ObjectId;
   likes: mongoose.Types.ObjectId[];
   comments: IComment[];
+  editedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -63,6 +64,10 @@ const PostSchema = new Schema<IPost>(
       },
     ],
     comments: [CommentSchema],
+    editedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

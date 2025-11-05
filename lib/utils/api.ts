@@ -71,7 +71,10 @@ export const api = {
 
   // Posts
   getPosts: (params?: string) => apiRequest(`/posts${params ? `?${params}` : ''}`),
+  getPost: (id: string) => apiRequest(`/posts/${id}`),
   createPost: (data: any) => apiRequest('/posts', { method: 'POST', body: JSON.stringify(data) }),
+  updatePost: (id: string, content: string) => apiRequest(`/posts/${id}`, { method: 'PUT', body: JSON.stringify({ content }) }),
+  deletePost: (id: string) => apiRequest(`/posts/${id}`, { method: 'DELETE' }),
   likePost: (id: string) => apiRequest(`/posts/${id}/like`, { method: 'POST' }),
   unlikePost: (id: string) => apiRequest(`/posts/${id}/like`, { method: 'DELETE' }),
   getPostComments: (id: string) => apiRequest(`/posts/${id}/comments`),
