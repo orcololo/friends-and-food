@@ -44,8 +44,24 @@ export default function MapPage() {
         api.getEvents(1, 50),
       ]);
 
-      setPlaces(placesData.data.places);
-      setEvents(eventsData.data.events);
+      const places = placesData.data.places || [];
+      const events = eventsData.data.events || [];
+
+      console.log('Loaded places:', places.length);
+      console.log('Loaded events:', events.length);
+      console.log('Places with location:', places.filter((p: any) => p.location?.coordinates).length);
+      console.log('Events with location:', events.filter((e: any) => e.location?.coordinates).length);
+
+      // Log first place/event for debugging
+      if (places.length > 0) {
+        console.log('First place:', { name: places[0].name, location: places[0].location });
+      }
+      if (events.length > 0) {
+        console.log('First event:', { title: events[0].title, location: events[0].location });
+      }
+
+      setPlaces(places);
+      setEvents(events);
     } catch (error) {
       console.error('Failed to load map data:', error);
     } finally {
@@ -121,11 +137,40 @@ export default function MapPage() {
               </div>
             </Card>
 
-            {/* Legend Card */}
+            {/* Stats Card */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
+            >
+              <Card className="border border-gray-200 shadow-lg">
+                <h3 className="font-bold text-gray-800 mb-4">Map Data</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Total Places:</span>
+                    <span className="font-semibold text-orange-600">{places.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Total Events:</span>
+                    <span className="font-semibold text-purple-600">{events.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Visible Places:</span>
+                    <span className="font-semibold text-orange-600">{filteredPlaces.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Visible Events:</span>
+                    <span className="font-semibold text-purple-600">{filteredEvents.length}</span>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Legend Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
             >
               <Card className="border border-gray-200 shadow-lg">
                 <h3 className="font-bold text-gray-800 mb-4">Legend</h3>
@@ -156,19 +201,27 @@ export default function MapPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.5 }}
             >
               <Card className="border border-gray-200 shadow-lg">
                 <h3 className="font-bold text-gray-800 mb-4">Quick Actions</h3>
                 <div className="space-y-3">
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button variant="outline" className="w-full hover:bg-orange-50 hover:border-orange-200 transition-colors">
+                    <Button
+                      variant="outline"
+                      className="w-full hover:bg-orange-50 hover:border-orange-200 transition-colors"
+                      onClick={() => router.push('/places/new')}
+                    >
                       <UtensilsCrossed className="w-4 h-4 mr-2" />
                       Add Place
                     </Button>
                   </motion.div>
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button variant="outline" className="w-full hover:bg-orange-50 hover:border-orange-200 transition-colors">
+                    <Button
+                      variant="outline"
+                      className="w-full hover:bg-orange-50 hover:border-orange-200 transition-colors"
+                      onClick={() => router.push('/events/new')}
+                    >
                       <Calendar className="w-4 h-4 mr-2" />
                       Create Event
                     </Button>
