@@ -43,8 +43,8 @@ function MapUpdater({ center, zoom }: { center: [number, number]; zoom: number }
 export default function MapView({
   places = [],
   events = [],
-  center = [40.7128, -74.006], // Note: Leaflet uses [lat, lng] not [lng, lat]
-  zoom = 12
+  center = [0.0349, -51.0694], // Macapá-AP, Brazil - Note: Leaflet uses [lat, lng] not [lng, lat]
+  zoom = 13
 }: MapViewProps) {
   return (
     <div className="relative w-full h-full">

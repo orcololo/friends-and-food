@@ -7,6 +7,8 @@ import { Heart, MessageCircle, Calendar, Users, TrendingUp, Clock } from 'lucide
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/utils/api';
 import {
   fadeInUp,
@@ -19,10 +21,14 @@ import {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [user, setUser] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+  const [postContent, setPostContent] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -50,6 +56,28 @@ export default function DashboardPage() {
       router.push('/auth/login');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCreatePost = async () => {
+    if (!postContent.trim()) {
+      showToast('Please enter some content', 'warning');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await api.createPost({ content: postContent });
+      showToast('Post created successfully!', 'success');
+      setPostContent('');
+      setShowCreatePostModal(false);
+      // Reload posts
+      const postsData = await api.getPosts();
+      setPosts(postsData.data.posts);
+    } catch (error: any) {
+      showToast(error.message || 'Failed to create post', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -103,7 +131,7 @@ export default function DashboardPage() {
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-semibold text-gray-800">Activity Feed</h2>
-              <Button size="sm">Create Post</Button>
+              <Button size="sm" onClick={() => setShowCreatePostModal(true)}>Create Post</Button>
             </div>
 
             <AnimatePresence mode="wait">
@@ -297,6 +325,53 @@ export default function DashboardPage() {
           </motion.div>
         </div>
       </div>
+
+      {/* Create Post Modal */}
+      <Modal
+        isOpen={showCreatePostModal}
+        onClose={() => setShowCreatePostModal(false)}
+        title="Create New Post"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="post-content" className="block text-sm font-medium text-gray-700 mb-2">
+              What's on your mind?
+            </label>
+            <textarea
+              id="post-content"
+              rows={5}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+              placeholder="Share your thoughts, food experiences, or restaurant recommendations..."
+              value={postContent}
+              onChange={(e) => setPostContent(e.target.value)}
+              maxLength={1000}
+            />
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-sm text-gray-500">
+                {postContent.length}/1000 characters
+              </span>
+            </div>
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setShowCreatePostModal(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreatePost}
+              isLoading={isSubmitting}
+              disabled={isSubmitting || !postContent.trim()}
+            >
+              {isSubmitting ? 'Posting...' : 'Post'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </motion.div>
   );
 }
