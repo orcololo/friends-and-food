@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { Calendar, Users, User, Clock } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -110,7 +111,7 @@ export default function EventsPage() {
         {!isLoading && !error && events.length === 0 && (
           <Card>
             <div className="text-center py-12">
-              <span className="text-6xl mb-4 inline-block">📅</span>
+              <Calendar className="w-24 h-24 mx-auto mb-4 text-gray-300" strokeWidth={1.5} />
               <h3 className="text-xl font-semibold text-gray-800 mb-2">No events yet</h3>
               <p className="text-gray-600 mb-6">Create your first dining event!</p>
               <Button onClick={() => router.push('/events/new')}>Create First Event</Button>
@@ -136,7 +137,7 @@ export default function EventsPage() {
                         onClick={() => router.push(`/events/${event._id}`)}
                       >
                         <div className="flex items-center space-x-3 mb-3">
-                          <div className="text-4xl">📅</div>
+                          <Calendar className="w-10 h-10 text-orange-500" strokeWidth={1.5} />
                           <div>
                             <h3 className="text-xl font-semibold text-gray-800">{event.title}</h3>
                             <p className="text-gray-600">{event.placeId?.name}</p>
@@ -149,16 +150,16 @@ export default function EventsPage() {
 
                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                           <div className="flex items-center space-x-1">
-                            <span>🕐</span>
+                            <Clock className="w-4 h-4" />
                             <span>{new Date(event.date).toLocaleDateString()}</span>
                             <span>at {event.time}</span>
                           </div>
                           <div className="flex items-center space-x-1">
-                            <span>👥</span>
+                            <Users className="w-4 h-4" />
                             <span>{event.attendees?.length || 0} attending</span>
                           </div>
                           <div className="flex items-center space-x-1">
-                            <span>👤</span>
+                            <User className="w-4 h-4" />
                             <span>by {event.organizer?.name}</span>
                           </div>
                         </div>

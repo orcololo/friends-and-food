@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { Image as ImageIcon } from 'lucide-react';
 
 interface LazyImageProps {
   src: string;
@@ -93,7 +94,7 @@ export default function LazyImage({
 
       {hasError && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400">
-          <span className="text-4xl">🖼️</span>
+          <ImageIcon className="w-12 h-12 text-gray-400" strokeWidth={1.5} />
         </div>
       )}
     </motion.div>

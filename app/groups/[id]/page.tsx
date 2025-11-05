@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { Users } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -69,7 +70,7 @@ export default function GroupDetailPage() {
           <Card className="mb-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-start space-x-4 flex-1">
-                <div className="text-6xl">👥</div>
+                <Users className="w-16 h-16 text-purple-500" strokeWidth={1.5} />
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
                     <h1 className="text-4xl font-bold text-gray-800">{group.name}</h1>

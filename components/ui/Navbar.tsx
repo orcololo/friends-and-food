@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { Home, Map, UtensilsCrossed, Calendar, Users } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
@@ -38,11 +39,11 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { href: '/dashboard', label: 'Dashboard', icon: '🏠' },
-    { href: '/map', label: 'Map', icon: '🗺️' },
-    { href: '/places', label: 'Places', icon: '🍽️' },
-    { href: '/events', label: 'Events', icon: '📅' },
-    { href: '/groups', label: 'Groups', icon: '👥' },
+    { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/map', label: 'Map', icon: Map },
+    { href: '/places', label: 'Places', icon: UtensilsCrossed },
+    { href: '/events', label: 'Events', icon: Calendar },
+    { href: '/groups', label: 'Groups', icon: Users },
   ];
 
   return (
@@ -50,27 +51,30 @@ export default function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl">🍴</span>
+            <UtensilsCrossed className="w-8 h-8 text-orange-500" />
             <span className="text-xl font-bold text-orange-500">Friends & Food</span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-1">
-            {navLinks.map((link) => (
-              <Link key={link.href} href={link.href}>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    pathname === link.href
-                      ? 'bg-orange-500 text-white'
-                      : 'text-gray-700 hover:bg-orange-50'
-                  }`}
-                >
-                  <span className="mr-2">{link.icon}</span>
-                  {link.label}
-                </motion.div>
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const IconComponent = link.icon;
+              return (
+                <Link key={link.href} href={link.href}>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
+                      pathname === link.href
+                        ? 'bg-orange-500 text-white'
+                        : 'text-gray-700 hover:bg-orange-50'
+                    }`}
+                  >
+                    <IconComponent className="w-5 h-5 mr-2" />
+                    {link.label}
+                  </motion.div>
+                </Link>
+              );
+            })}
           </div>
 
           <div className="flex items-center space-x-4">

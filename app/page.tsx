@@ -3,27 +3,28 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { Map, Calendar, Star, Users, UtensilsCrossed } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
 export default function Home() {
   const features = [
     {
-      icon: '🗺️',
+      icon: Map,
       title: 'Discover Places',
       description: 'Explore restaurants on an interactive map and find hidden gems in your area',
     },
     {
-      icon: '📅',
+      icon: Calendar,
       title: 'Plan Events',
       description: 'Organize dining events with friends and coordinate meetups effortlessly',
     },
     {
-      icon: '⭐',
+      icon: Star,
       title: 'Share Reviews',
       description: 'Write reviews, rate places, and share your dining experiences with friends',
     },
     {
-      icon: '👥',
+      icon: Users,
       title: 'Create Groups',
       description: 'Build food communities and plan group dining adventures together',
     },
@@ -45,7 +46,7 @@ export default function Home() {
             transition={{ delay: 0.2, duration: 0.8 }}
             className="mb-6"
           >
-            <span className="text-8xl mb-4 inline-block">🍴</span>
+            <UtensilsCrossed className="w-32 h-32 mx-auto text-orange-500" strokeWidth={1.5} />
           </motion.div>
 
           <motion.h1
@@ -98,20 +99,23 @@ export default function Home() {
         </motion.h2>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.6 }}
-              whileHover={{ y: -10, transition: { duration: 0.2 } }}
-              className="bg-white rounded-xl p-6 shadow-lg hover:shadow-2xl transition-shadow"
-            >
-              <div className="text-5xl mb-4">{feature.icon}</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">{feature.title}</h3>
-              <p className="text-gray-600">{feature.description}</p>
-            </motion.div>
-          ))}
+          {features.map((feature, index) => {
+            const IconComponent = feature.icon;
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.6 }}
+                whileHover={{ y: -10, transition: { duration: 0.2 } }}
+                className="bg-white rounded-xl p-6 shadow-lg hover:shadow-2xl transition-shadow"
+              >
+                <IconComponent className="w-16 h-16 mb-4 text-orange-500" strokeWidth={1.5} />
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
 

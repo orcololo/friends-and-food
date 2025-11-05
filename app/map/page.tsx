@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { UtensilsCrossed, Calendar } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -90,11 +91,11 @@ export default function MapPage() {
               <h3 className="font-semibold text-gray-800 mb-3">Legend</h3>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <span className="text-2xl">🍽️</span>
+                  <UtensilsCrossed className="w-6 h-6" />
                   <span className="text-gray-700">Restaurant/Place</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-2xl">📅</span>
+                  <Calendar className="w-6 h-6" />
                   <span className="text-gray-700">Event</span>
                 </div>
               </div>

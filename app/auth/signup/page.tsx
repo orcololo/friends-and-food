@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { UtensilsCrossed } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { api } from '@/lib/utils/api';
@@ -44,7 +45,7 @@ export default function SignupPage() {
         className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <span className="text-6xl mb-4 inline-block">🍴</span>
+          <UtensilsCrossed className="w-20 h-20 mx-auto mb-4 text-orange-500" strokeWidth={1.5} />
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h1>
           <p className="text-gray-600">Join the food adventure</p>
         </div>

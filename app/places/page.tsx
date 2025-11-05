@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { UtensilsCrossed, Star } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -110,7 +111,7 @@ export default function PlacesPage() {
         {showEmptyState && (
           <Card>
             <div className="text-center py-12">
-              <span className="text-6xl mb-4 inline-block">🍽️</span>
+              <UtensilsCrossed className="w-24 h-24 mx-auto mb-4 text-gray-300" strokeWidth={1.5} />
               <h3 className="text-xl font-semibold text-gray-800 mb-2">No places yet</h3>
               <p className="text-gray-600 mb-6">Be the first to add a restaurant!</p>
               <Button onClick={() => router.push('/places/new')}>Add First Place</Button>
@@ -132,7 +133,7 @@ export default function PlacesPage() {
                   className="cursor-pointer"
                 >
                   <Card hover className="h-full">
-                    <div className="aspect-video bg-gradient-to-br from-orange-100 to-red-100 rounded-lg mb-4 flex items-center justify-center text-6xl">
+                    <div className="aspect-video bg-gradient-to-br from-orange-100 to-red-100 rounded-lg mb-4 flex items-center justify-center">
                       {place.images && place.images.length > 0 ? (
                         <img
                           src={place.images[0]}
@@ -140,7 +141,7 @@ export default function PlacesPage() {
                           className="w-full h-full object-cover rounded-lg"
                         />
                       ) : (
-                        '🍽️'
+                        <UtensilsCrossed className="w-16 h-16 text-orange-300" strokeWidth={1.5} />
                       )}
                     </div>
                     <h3 className="text-xl font-semibold text-gray-800 mb-2">{place.name}</h3>
@@ -150,7 +151,7 @@ export default function PlacesPage() {
                       <span className="text-sm text-gray-600">{'$'.repeat(place.priceRange)}</span>
                     </div>
                     <div className="flex items-center space-x-1 mb-3">
-                      <span className="text-yellow-500">⭐</span>
+                      <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
                       <span className="text-sm font-medium">{place.averageRating.toFixed(1)}</span>
                     </div>
                     <p className="text-sm text-gray-500 mb-4 line-clamp-2">{place.address}</p>

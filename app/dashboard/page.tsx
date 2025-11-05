@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { Heart, MessageCircle } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -63,7 +64,7 @@ export default function DashboardPage() {
           className="mb-8"
         >
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Welcome back, {user?.name}! 👋
+            Welcome back, {user?.name}!
           </h1>
           <p className="text-gray-600">Here's what's happening in your food community</p>
         </motion.div>
@@ -97,11 +98,13 @@ export default function DashboardPage() {
                       </div>
                       <p className="text-gray-700 mb-3">{post.content}</p>
                       <div className="flex items-center space-x-4 text-gray-500">
-                        <button className="hover:text-orange-500 transition-colors">
-                          ❤️ {post.likes?.length || 0}
+                        <button className="hover:text-orange-500 transition-colors flex items-center space-x-1">
+                          <Heart className="w-4 h-4" />
+                          <span>{post.likes?.length || 0}</span>
                         </button>
-                        <button className="hover:text-orange-500 transition-colors">
-                          💬 {post.comments?.length || 0}
+                        <button className="hover:text-orange-500 transition-colors flex items-center space-x-1">
+                          <MessageCircle className="w-4 h-4" />
+                          <span>{post.comments?.length || 0}</span>
                         </button>
                       </div>
                     </div>

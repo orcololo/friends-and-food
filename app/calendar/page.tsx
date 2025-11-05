@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -134,7 +135,7 @@ export default function CalendarPage() {
                           className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
                         >
                           <div className="flex items-center space-x-3">
-                            <div className="text-3xl">📅</div>
+                            <CalendarIcon className="w-12 h-12 text-orange-500" strokeWidth={1.5} />
                             <div className="flex-1">
                               <p className="font-semibold text-gray-800">{event.title}</p>
                               <p className="text-sm text-gray-600">{event.placeId?.name}</p>

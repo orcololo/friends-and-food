@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { Users } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -94,7 +95,7 @@ export default function GroupsPage() {
         {!isLoading && !error && groups.length === 0 && (
           <Card>
             <div className="text-center py-12">
-              <span className="text-6xl mb-4 inline-block">👥</span>
+              <Users className="w-24 h-24 mx-auto mb-4 text-gray-300" strokeWidth={1.5} />
               <h3 className="text-xl font-semibold text-gray-800 mb-2">No groups yet</h3>
               <p className="text-gray-600 mb-6">Create a group to start planning together!</p>
               <Button onClick={() => router.push('/groups/new')}>Create First Group</Button>
@@ -116,7 +117,7 @@ export default function GroupsPage() {
                   className="cursor-pointer"
                 >
                   <Card hover className="h-full">
-                    <div className="aspect-video bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-4 flex items-center justify-center text-6xl">
+                    <div className="aspect-video bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-4 flex items-center justify-center">
                       {group.coverImage ? (
                         <img
                           src={group.coverImage}
@@ -124,7 +125,7 @@ export default function GroupsPage() {
                           className="w-full h-full object-cover rounded-lg"
                         />
                       ) : (
-                        '👥'
+                        <Users className="w-16 h-16 text-purple-300" strokeWidth={1.5} />
                       )}
                     </div>
                     <div className="flex items-center justify-between mb-2">

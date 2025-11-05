@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { Heart, MessageCircle, Star, Calendar } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -220,8 +221,14 @@ export default function ProfilePage() {
                   <Card key={post._id} hover>
                     <p className="text-gray-700 mb-2">{post.content}</p>
                     <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <span>❤️ {post.likes?.length || 0}</span>
-                      <span>💬 {post.comments?.length || 0}</span>
+                      <span className="flex items-center space-x-1">
+                        <Heart className="w-4 h-4" />
+                        <span>{post.likes?.length || 0}</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        <MessageCircle className="w-4 h-4" />
+                        <span>{post.comments?.length || 0}</span>
+                      </span>
                       <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                     </div>
                   </Card>
@@ -246,12 +253,10 @@ export default function ProfilePage() {
                         <p className="font-semibold text-gray-800">{review.placeId?.name}</p>
                         <div className="flex items-center">
                           {[...Array(5)].map((_, i) => (
-                            <span
+                            <Star
                               key={i}
-                              className={i < review.rating ? 'text-yellow-500' : 'text-gray-300'}
-                            >
-                              ⭐
-                            </span>
+                              className={`w-4 h-4 ${i < review.rating ? 'fill-yellow-500 text-yellow-500' : 'fill-gray-300 text-gray-300'}`}
+                            />
                           ))}
                         </div>
                       </div>
@@ -278,7 +283,7 @@ export default function ProfilePage() {
                 profile.events.map((event: any) => (
                   <Card key={event._id} hover>
                     <div className="flex items-center space-x-3">
-                      <div className="text-4xl">📅</div>
+                      <Calendar className="w-10 h-10 text-orange-500" strokeWidth={1.5} />
                       <div>
                         <p className="font-semibold text-gray-800">{event.title}</p>
                         <p className="text-sm text-gray-600">{event.placeId?.name}</p>

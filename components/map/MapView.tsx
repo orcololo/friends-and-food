@@ -3,12 +3,17 @@
 import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { renderToString } from 'react-dom/server';
+import { UtensilsCrossed, Calendar, Star } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icons in React Leaflet
-const createCustomIcon = (emoji: string) => {
+const createCustomIcon = (IconComponent: any, color: string = 'currentColor') => {
+  const iconHtml = renderToString(
+    <IconComponent size={24} color={color} strokeWidth={2} />
+  );
   return L.divIcon({
-    html: `<div style="font-size: 24px;">${emoji}</div>`,
+    html: `<div style="display: flex; align-items: center; justify-content: center;">${iconHtml}</div>`,
     className: 'custom-marker',
     iconSize: [30, 30],
     iconAnchor: [15, 30],
@@ -16,8 +21,8 @@ const createCustomIcon = (emoji: string) => {
   });
 };
 
-const placeIcon = createCustomIcon('🍽️');
-const eventIcon = createCustomIcon('📅');
+const placeIcon = createCustomIcon(UtensilsCrossed, '#f97316');
+const eventIcon = createCustomIcon(Calendar, '#f97316');
 
 interface MapViewProps {
   places?: any[];
@@ -70,8 +75,9 @@ export default function MapView({
                   <div className="p-2">
                     <h3 className="font-bold text-base mb-1">{place.name}</h3>
                     <p className="text-sm text-gray-600">{place.cuisine}</p>
-                    <p className="text-sm text-gray-600">
-                      ⭐ {place.averageRating?.toFixed(1) || 'N/A'}
+                    <p className="text-sm text-gray-600 flex items-center space-x-1">
+                      <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                      <span>{place.averageRating?.toFixed(1) || 'N/A'}</span>
                     </p>
                   </div>
                 </Popup>

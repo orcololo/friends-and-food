@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { Star, MapPin } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -117,11 +118,14 @@ export default function PlaceDetailPage() {
                   <span>{'$'.repeat(place.priceRange)}</span>
                   <span>•</span>
                   <div className="flex items-center">
-                    <span className="text-yellow-500 mr-1">⭐</span>
+                    <Star className="w-4 h-4 fill-yellow-500 text-yellow-500 mr-1" />
                     <span className="font-semibold">{place.averageRating.toFixed(1)}</span>
                   </div>
                 </div>
-                <p className="text-gray-600 mb-2">📍 {place.address}</p>
+                <p className="text-gray-600 mb-2 flex items-center">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  {place.address}
+                </p>
                 <p className="text-sm text-gray-500">
                   Added by {place.createdBy?.name || 'Unknown'}
                 </p>
@@ -175,14 +179,12 @@ export default function PlaceDetailPage() {
                           </p>
                           <div className="flex items-center">
                             {[...Array(5)].map((_, i) => (
-                              <span
+                              <Star
                                 key={i}
-                                className={
-                                  i < review.rating ? 'text-yellow-500' : 'text-gray-300'
-                                }
-                              >
-                                ⭐
-                              </span>
+                                className={`w-4 h-4 ${
+                                  i < review.rating ? 'fill-yellow-500 text-yellow-500' : 'fill-gray-300 text-gray-300'
+                                }`}
+                              />
                             ))}
                           </div>
                         </div>
@@ -221,11 +223,9 @@ export default function PlaceDetailPage() {
                 <button
                   key={star}
                   onClick={() => setReviewData({ ...reviewData, rating: star })}
-                  className="text-3xl focus:outline-none"
+                  className="focus:outline-none"
                 >
-                  <span className={star <= reviewData.rating ? 'text-yellow-500' : 'text-gray-300'}>
-                    ⭐
-                  </span>
+                  <Star className={`w-8 h-8 ${star <= reviewData.rating ? 'fill-yellow-500 text-yellow-500' : 'fill-gray-300 text-gray-300'}`} />
                 </button>
               ))}
             </div>

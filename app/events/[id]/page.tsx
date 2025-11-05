@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { Calendar, Users, MapPin } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -90,7 +91,7 @@ export default function EventDetailPage() {
           <Card className="mb-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-start space-x-4 flex-1">
-                <div className="text-6xl">📅</div>
+                <Calendar className="w-16 h-16 text-orange-500" strokeWidth={1.5} />
                 <div className="flex-1">
                   <h1 className="text-4xl font-bold text-gray-800 mb-2">{event.title}</h1>
                   <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
@@ -100,7 +101,7 @@ export default function EventDetailPage() {
                       <span>at {event.time}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span>👥</span>
+                      <Users className="w-5 h-5" />
                       <span>{event.attendees?.length || 0} attending</span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -134,7 +135,10 @@ export default function EventDetailPage() {
             {/* Place Details */}
             {event.placeId && (
               <div className="bg-orange-50 rounded-lg p-4 mt-4">
-                <h3 className="font-semibold text-gray-800 mb-2">📍 Location</h3>
+                <h3 className="font-semibold text-gray-800 mb-2 flex items-center">
+                  <MapPin className="w-5 h-5 mr-1" />
+                  Location
+                </h3>
                 <p className="text-lg font-medium text-gray-800">{event.placeId.name}</p>
                 <p className="text-gray-600">{event.placeId.address}</p>
                 <p className="text-sm text-gray-500 mt-1">{event.placeId.cuisine}</p>
