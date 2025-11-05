@@ -7,10 +7,12 @@ import { motion } from 'framer-motion';
 import { UtensilsCrossed } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { api } from '@/lib/utils/api';
 
 export default function SignupPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     username: '',
@@ -27,7 +29,8 @@ export default function SignupPage() {
 
     try {
       const response = await api.register(formData);
-      localStorage.setItem('token', response.data.token);
+      // Use AuthContext login method to update state
+      login(response.data.token, response.data.user);
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Registration failed');

@@ -7,10 +7,12 @@ import { motion } from 'framer-motion';
 import { UtensilsCrossed } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { api } from '@/lib/utils/api';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -25,7 +27,8 @@ export default function LoginPage() {
 
     try {
       const response = await api.login(formData);
-      localStorage.setItem('token', response.data.token);
+      // Use AuthContext login method to update state
+      login(response.data.token, response.data.user);
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed');

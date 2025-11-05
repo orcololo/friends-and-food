@@ -29,7 +29,8 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
           const newProgress = prev - (100 / (toast.duration! / 50));
           if (newProgress <= 0) {
             clearInterval(interval);
-            onRemove(toast.id);
+            // Schedule removal to avoid setState during render
+            setTimeout(() => onRemove(toast.id), 0);
             return 0;
           }
           return newProgress;
