@@ -3,10 +3,11 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Users, MapPin, Clock, Share2, CheckCircle2, XCircle } from 'lucide-react';
+import { Calendar, Users, MapPin, Clock, Share2, CheckCircle2, XCircle, MessageCircle } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/utils/api';
 import {
@@ -26,6 +27,12 @@ export default function EventDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAttending, setIsAttending] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentContent, setCommentContent] = useState('');
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
 
   // Calculate countdown for upcoming events
   useEffect(() => {
@@ -107,6 +114,46 @@ export default function EventDetailPage() {
       showToast('Link copied to clipboard!', 'success');
     }
   }, [event, showToast]);
+
+  const handleOpenComments = async () => {
+    setShowCommentsModal(true);
+    setComments([]);
+    setCommentContent('');
+    setIsLoadingComments(true);
+
+    try {
+      const response = await api.getEventComments(params.id as string);
+      setComments(response.data.comments || []);
+      setCommentCount(response.data.count || 0);
+    } catch (error: any) {
+      showToast(error.message || 'Failed to load comments', 'error');
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!commentContent.trim()) {
+      showToast('Please enter a comment', 'warning');
+      return;
+    }
+
+    setIsSubmittingComment(true);
+    try {
+      const response = await api.addEventComment(params.id as string, commentContent);
+
+      // Add new comment to list
+      setComments((prev) => [response.data, ...prev]);
+      setCommentCount((prev) => prev + 1);
+
+      setCommentContent('');
+      showToast('Comment added successfully!', 'success');
+    } catch (error: any) {
+      showToast(error.message || 'Failed to add comment', 'error');
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -386,8 +433,131 @@ export default function EventDetailPage() {
               )}
             </Card>
           </motion.div>
+
+          {/* Comments Section */}
+          <motion.div variants={staggerItem}>
+            <Card>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                  <MessageCircle className="w-6 h-6 mr-2 text-orange-500" />
+                  Comments ({commentCount})
+                </h2>
+                <Button onClick={handleOpenComments}>
+                  View Comments
+                </Button>
+              </div>
+              <p className="text-gray-600">
+                Share your thoughts about this event with other attendees
+              </p>
+            </Card>
+          </motion.div>
         </motion.div>
       </div>
+
+      {/* Comments Modal */}
+      <Modal
+        isOpen={showCommentsModal}
+        onClose={() => setShowCommentsModal(false)}
+        title="Event Comments"
+        size="lg"
+      >
+        <div className="space-y-4">
+          {/* Event Info */}
+          <Card background="gradient" padding="md">
+            <div className="flex items-start space-x-3">
+              <Calendar className="w-10 h-10 text-orange-500" />
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-800 text-lg">{event?.title}</h4>
+                <p className="text-gray-600 text-sm">
+                  {new Date(event?.date).toLocaleDateString()} at {event?.time}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Comment Input */}
+          <div>
+            <label htmlFor="comment-content" className="block text-sm font-medium text-gray-700 mb-2">
+              Add a comment
+            </label>
+            <textarea
+              id="comment-content"
+              rows={3}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+              placeholder="Share your thoughts about this event..."
+              value={commentContent}
+              onChange={(e) => setCommentContent(e.target.value)}
+              maxLength={1000}
+            />
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-sm text-gray-500">
+                {commentContent.length}/1000 characters
+              </span>
+              <Button
+                size="sm"
+                onClick={handleAddComment}
+                isLoading={isSubmittingComment}
+                disabled={isSubmittingComment || !commentContent.trim()}
+              >
+                {isSubmittingComment ? 'Posting...' : 'Comment'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Comments List */}
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {isLoadingComments ? (
+              <div className="flex justify-center py-8">
+                <motion.div
+                  className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                />
+              </div>
+            ) : comments.length === 0 ? (
+              <div className="text-center py-8">
+                <MessageCircle className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <p className="text-gray-500">No comments yet. Be the first to comment!</p>
+              </div>
+            ) : (
+              <AnimatePresence>
+                {comments.map((comment, index) => (
+                  <motion.div
+                    key={comment._id || index}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card padding="sm" className="bg-gray-50">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                          {comment.userId?.name?.charAt(0)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h5 className="font-semibold text-gray-800 text-sm">
+                              {comment.userId?.name}
+                            </h5>
+                            <span className="text-gray-400 text-xs">
+                              @{comment.userId?.username}
+                            </span>
+                            <span className="text-gray-400 text-xs">•</span>
+                            <span className="text-gray-400 text-xs">
+                              {new Date(comment.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-gray-700 text-sm">{comment.content}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            )}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
