@@ -8,6 +8,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
+import PhotoGallery from '@/components/ui/PhotoGallery';
 import { api } from '@/lib/utils/api';
 
 export default function PlaceDetailPage() {
@@ -117,24 +118,13 @@ export default function PlaceDetailPage() {
             )}
           </Card>
 
-          {/* Images */}
+          {/* Photo Gallery */}
           {place.images && place.images.length > 0 && (
             <Card className="mb-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Photos</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {place.images.map((image: string, index: number) => (
-                  <div
-                    key={index}
-                    className="aspect-video bg-gray-200 rounded-lg overflow-hidden"
-                  >
-                    <img
-                      src={image}
-                      alt={`${place.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+                Photos ({place.images.length})
+              </h2>
+              <PhotoGallery images={place.images} alt={place.name} />
             </Card>
           )}
 
