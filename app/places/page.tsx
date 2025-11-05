@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Navbar from '@/components/ui/Navbar';
@@ -8,11 +8,13 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { api } from '@/lib/utils/api';
 
 export default function PlacesPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [places, setPlaces] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,17 +23,8 @@ export default function PlacesPage() {
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 12;
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/auth/login');
-      return;
-    }
-
-    loadPlaces(currentPage);
-  }, [currentPage]);
-
-  const loadPlaces = async (page: number) => {
+  // Memoized loading function to prevent recreation on every render
+  const loadPlaces = useCallback(async (page: number) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -47,16 +40,39 @@ export default function PlacesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [itemsPerPage, showToast]);
 
-  const handlePageChange = (page: number) => {
+  // Auth check and load places
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
+
+    loadPlaces(currentPage);
+  }, [currentPage, isAuthenticated, authLoading, router, loadPlaces]);
+
+  // Memoized callback for page changes
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const handleRetry = () => {
+  // Memoized callback for retry
+  const handleRetry = useCallback(() => {
     loadPlaces(currentPage);
-  };
+  }, [loadPlaces, currentPage]);
+
+  // Memoized callback for navigation to place detail
+  const handlePlaceClick = useCallback((placeId: string) => {
+    router.push(`/places/${placeId}`);
+  }, [router]);
+
+  // Compute if we have data to show
+  const hasPlaces = useMemo(() => !isLoading && !error && places.length > 0, [isLoading, error, places.length]);
+  const showEmptyState = useMemo(() => !isLoading && !error && places.length === 0, [isLoading, error, places.length]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -91,7 +107,7 @@ export default function PlacesPage() {
         )}
 
         {/* Empty State */}
-        {!isLoading && !error && places.length === 0 && (
+        {showEmptyState && (
           <Card>
             <div className="text-center py-12">
               <span className="text-6xl mb-4 inline-block">🍽️</span>
@@ -103,7 +119,7 @@ export default function PlacesPage() {
         )}
 
         {/* Places Grid */}
-        {!isLoading && !error && places.length > 0 && (
+        {hasPlaces && (
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {places.map((place, index) => (
@@ -112,7 +128,7 @@ export default function PlacesPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  onClick={() => router.push(`/places/${place._id}`)}
+                  onClick={() => handlePlaceClick(place._id)}
                   className="cursor-pointer"
                 >
                   <Card hover className="h-full">
