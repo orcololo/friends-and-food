@@ -49,6 +49,14 @@ export const api = {
   deletePlace: (id: string) => apiRequest(`/places/${id}`, { method: 'DELETE' }),
   getNearbyPlaces: (lng: number, lat: number, maxDistance?: number) =>
     apiRequest(`/places/nearby?lng=${lng}&lat=${lat}${maxDistance ? `&maxDistance=${maxDistance}` : ''}`),
+  savePlace: (id: string) => apiRequest(`/places/${id}/save`, { method: 'POST' }),
+  unsavePlace: (id: string) => apiRequest(`/places/${id}/save`, { method: 'DELETE' }),
+  getSavedPlaces: (page?: number, limit?: number) => {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
+    return apiRequest(`/saved-places${params.toString() ? `?${params.toString()}` : ''}`);
+  },
 
   // Events
   getEvents: (page?: number, limit?: number) => {

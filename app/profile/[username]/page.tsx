@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { Heart, MessageCircle, Star, Calendar, UserCheck, UserPlus, Mail, MapPin, Link as LinkIcon, Trash2, Edit3, Share2 } from 'lucide-react';
+import { Heart, MessageCircle, Star, Calendar, UserCheck, UserPlus, Mail, MapPin, Link as LinkIcon, Trash2, Edit3, Share2, Bookmark, DollarSign } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -29,7 +29,8 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState({ name: '', bio: '' });
-  const [activeTab, setActiveTab] = useState<'posts' | 'reviews' | 'events' | 'friends'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'reviews' | 'events' | 'friends' | 'saved'>('posts');
+  const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
@@ -52,6 +53,13 @@ export default function ProfilePage() {
 
     loadProfile();
   }, [params.username]);
+
+  useEffect(() => {
+    // Load saved places only if viewing own profile
+    if (currentUser && profile && currentUser.id === profile.user._id) {
+      loadSavedPlaces();
+    }
+  }, [currentUser, profile]);
 
   const loadProfile = async () => {
     try {
@@ -79,6 +87,15 @@ export default function ProfilePage() {
       console.error('Failed to load profile:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadSavedPlaces = async () => {
+    try {
+      const response = await api.getSavedPlaces();
+      setSavedPlaces(response.data.places || []);
+    } catch (error) {
+      console.error('Failed to load saved places:', error);
     }
   };
 
@@ -501,7 +518,7 @@ export default function ProfilePage() {
           <motion.div variants={staggerItem}>
             <Card>
               <div className="flex space-x-6 border-b relative">
-                {(['posts', 'reviews', 'events', 'friends'] as const).map((tab) => (
+                {(['posts', 'reviews', 'events', 'friends', ...(isOwnProfile ? ['saved' as const] : [])] as const).map((tab) => (
                   <motion.button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -752,6 +769,113 @@ export default function ProfilePage() {
                     </div>
                   </Card>
                 </div>
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === 'saved' && isOwnProfile && (
+              <motion.div
+                key="saved"
+                variants={tabContent}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {savedPlaces && savedPlaces.length > 0 ? (
+                  savedPlaces.map((place: any) => (
+                    <motion.div
+                      key={place._id}
+                      whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                    >
+                      <Card
+                        hover
+                        className="cursor-pointer overflow-hidden"
+                        onClick={() => router.push(`/places/${place._id}`)}
+                      >
+                        {/* Place Image */}
+                        <div className="relative h-48 bg-gray-200 overflow-hidden">
+                          {place.images && place.images.length > 0 ? (
+                            <img
+                              src={place.images[0]}
+                              alt={place.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-pink-100">
+                              <MapPin className="w-16 h-16 text-gray-400" />
+                            </div>
+                          )}
+                          {/* Bookmark Badge */}
+                          <div className="absolute top-2 right-2 bg-orange-500 text-white p-2 rounded-full shadow-lg">
+                            <Bookmark className="w-4 h-4 fill-white" />
+                          </div>
+                        </div>
+
+                        {/* Place Info */}
+                        <div className="p-4">
+                          <h3 className="font-bold text-lg text-gray-800 mb-2 truncate">
+                            {place.name}
+                          </h3>
+
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-sm font-medium">
+                              {place.cuisine}
+                            </span>
+                            <div className="flex items-center text-yellow-500">
+                              <Star className="w-4 h-4 fill-yellow-500 mr-1" />
+                              <span className="font-semibold text-gray-700">
+                                {place.averageRating.toFixed(1)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between text-sm text-gray-600">
+                            <div className="flex items-center">
+                              <MapPin className="w-4 h-4 mr-1" />
+                              <span className="truncate">{place.address}</span>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 flex items-center text-gray-600">
+                            {Array(place.priceRange)
+                              .fill(0)
+                              .map((_, i) => (
+                                <DollarSign key={i} className="w-4 h-4 text-green-600" />
+                              ))}
+                            {Array(4 - place.priceRange)
+                              .fill(0)
+                              .map((_, i) => (
+                                <DollarSign key={`empty-${i}`} className="w-4 h-4 text-gray-300" />
+                              ))}
+                          </div>
+
+                          {place.description && (
+                            <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                              {place.description}
+                            </p>
+                          )}
+                        </div>
+                      </Card>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="col-span-full">
+                    <motion.div variants={fadeInUp}>
+                      <Card>
+                        <div className="text-center py-12">
+                          <Bookmark className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                          <p className="text-gray-500 mb-2">No saved places yet</p>
+                          <p className="text-sm text-gray-400 mb-4">
+                            Start exploring and save your favorite restaurants!
+                          </p>
+                          <Button onClick={() => router.push('/places')}>
+                            Explore Places
+                          </Button>
+                        </div>
+                      </Card>
+                    </motion.div>
+                  </div>
                 )}
               </motion.div>
             )}

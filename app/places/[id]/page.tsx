@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, MapPin, Heart, Calendar, Share2, ImageIcon, X, Upload } from 'lucide-react';
+import { Star, MapPin, Heart, Calendar, Share2, ImageIcon, X, Upload, Bookmark } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -38,7 +38,7 @@ export default function PlaceDetailPage() {
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const REVIEW_MAX_LENGTH = 1000;
@@ -52,6 +52,7 @@ export default function PlaceDetailPage() {
     }
 
     loadPlaceDetails();
+    loadSavedStatus();
   }, [params.id]);
 
   const loadPlaceDetails = async () => {
@@ -67,6 +68,19 @@ export default function PlaceDetailPage() {
       console.error('Failed to load place:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadSavedStatus = async () => {
+    try {
+      const response = await api.getSavedPlaces();
+      const savedPlaces = response.data.places || [];
+      const placeId = params.id as string;
+      const isPlaceSaved = savedPlaces.some((p: any) => p._id === placeId);
+      setIsSaved(isPlaceSaved);
+    } catch (error) {
+      console.error('Failed to load saved status:', error);
+      // Don't show error toast, as this is not critical
     }
   };
 
@@ -185,10 +199,27 @@ export default function PlaceDetailPage() {
     }
   };
 
-  const handleToggleFavorite = useCallback(() => {
-    setIsFavorite(!isFavorite);
-    showToast(isFavorite ? 'Removed from favorites' : 'Added to favorites', 'success');
-  }, [isFavorite, showToast]);
+  const handleToggleBookmark = async () => {
+    const placeId = params.id as string;
+    const wasSaved = isSaved;
+
+    // Optimistic update
+    setIsSaved(!isSaved);
+
+    try {
+      if (wasSaved) {
+        await api.unsavePlace(placeId);
+        showToast('Removed from saved places', 'success');
+      } else {
+        await api.savePlace(placeId);
+        showToast('Place saved!', 'success');
+      }
+    } catch (error: any) {
+      // Revert on error
+      setIsSaved(wasSaved);
+      showToast(error.message || 'Failed to update saved place', 'error');
+    }
+  };
 
   const handleShare = useCallback(() => {
     if (navigator.share) {
@@ -324,14 +355,16 @@ export default function PlaceDetailPage() {
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={handleToggleFavorite}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                    aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                    onClick={handleToggleBookmark}
+                    className={`p-2 rounded-full transition-all ${
+                      isSaved
+                        ? 'bg-orange-500 text-white hover:bg-orange-600'
+                        : 'hover:bg-gray-100 text-gray-600'
+                    }`}
+                    aria-label={isSaved ? 'Remove from saved places' : 'Save place'}
                   >
-                    <Heart
-                      className={`w-5 h-5 transition-colors ${
-                        isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'
-                      }`}
+                    <Bookmark
+                      className={`w-5 h-5 ${isSaved ? 'fill-white' : ''}`}
                     />
                   </motion.button>
                   <Button onClick={() => setShowReviewModal(true)}>
