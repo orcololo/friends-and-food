@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import PhotoGallery from '@/components/ui/PhotoGallery';
+import SafeContent from '@/components/ui/SafeContent';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/utils/api';
 
@@ -23,6 +24,7 @@ export default function PlaceDetailPage() {
   const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const REVIEW_MAX_LENGTH = 1000;
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -190,7 +192,12 @@ export default function PlaceDetailPage() {
                       </span>
                     </div>
                     {review.comment && (
-                      <p className="text-gray-700 ml-13">{review.comment}</p>
+                      <SafeContent
+                        content={review.comment}
+                        maxLength={1000}
+                        as="p"
+                        className="text-gray-700 ml-13 break-words"
+                      />
                     )}
                   </div>
                 ))}
@@ -225,13 +232,19 @@ export default function PlaceDetailPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Comment</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">Comment</label>
+              <span className={`text-xs ${reviewData.comment.length >= REVIEW_MAX_LENGTH ? 'text-red-500' : 'text-gray-500'}`}>
+                {reviewData.comment.length}/{REVIEW_MAX_LENGTH}
+              </span>
+            </div>
             <textarea
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               rows={4}
               placeholder="Share your experience..."
               value={reviewData.comment}
               onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
+              maxLength={REVIEW_MAX_LENGTH}
             />
           </div>
 

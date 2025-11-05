@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
+import SafeContent from '@/components/ui/SafeContent';
 import { useToast } from '@/components/ui/Toast';
 import { initSocket, getSocket } from '@/lib/utils/socket-client';
 
@@ -18,6 +19,7 @@ export default function MessagesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const MESSAGE_MAX_LENGTH = 2000;
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -231,7 +233,12 @@ export default function MessagesPage() {
                                 : 'bg-gray-200 text-gray-800'
                             }`}
                           >
-                            <p>{message.content}</p>
+                            <SafeContent
+                              content={message.content}
+                              maxLength={2000}
+                              as="p"
+                              className="break-words"
+                            />
                             <p className={`text-xs mt-1 ${isSent ? 'text-orange-100' : 'text-gray-500'}`}>
                               {new Date(message.createdAt).toLocaleTimeString()}
                             </p>
@@ -243,22 +250,30 @@ export default function MessagesPage() {
 
                   {/* Input */}
                   <form onSubmit={handleSendMessage} className="p-4 border-t">
-                    <div className="flex space-x-2">
-                      <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type a message..."
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        disabled={isSendingMessage}
-                      />
-                      <button
-                        type="submit"
-                        disabled={isSendingMessage || !newMessage.trim()}
-                        className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isSendingMessage ? 'Sending...' : 'Send'}
-                      </button>
+                    <div className="space-y-2">
+                      <div className="flex space-x-2">
+                        <input
+                          type="text"
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          placeholder="Type a message..."
+                          maxLength={MESSAGE_MAX_LENGTH}
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          disabled={isSendingMessage}
+                        />
+                        <button
+                          type="submit"
+                          disabled={isSendingMessage || !newMessage.trim()}
+                          className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isSendingMessage ? 'Sending...' : 'Send'}
+                        </button>
+                      </div>
+                      {newMessage.length > MESSAGE_MAX_LENGTH * 0.8 && (
+                        <p className={`text-xs text-right ${newMessage.length >= MESSAGE_MAX_LENGTH ? 'text-red-500' : 'text-gray-500'}`}>
+                          {newMessage.length}/{MESSAGE_MAX_LENGTH} characters
+                        </p>
+                      )}
                     </div>
                   </form>
                 </>
