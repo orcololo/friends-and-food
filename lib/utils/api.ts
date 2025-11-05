@@ -72,6 +72,8 @@ export const api = {
   createPost: (data: any) => apiRequest('/posts', { method: 'POST', body: JSON.stringify(data) }),
   likePost: (id: string) => apiRequest(`/posts/${id}/like`, { method: 'POST' }),
   unlikePost: (id: string) => apiRequest(`/posts/${id}/like`, { method: 'DELETE' }),
+  getPostComments: (id: string) => apiRequest(`/posts/${id}/comments`),
+  addPostComment: (id: string, content: string) => apiRequest(`/posts/${id}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
 
   // Groups
   getGroups: (page?: number, limit?: number) => {
