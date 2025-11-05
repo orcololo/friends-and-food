@@ -352,61 +352,164 @@ export default function PlaceDetailPage() {
           animate="animate"
           className="space-y-6"
         >
-          {/* Quick Actions Bar */}
-          <motion.div variants={staggerItem}>
-            <Card>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <MapPin className="w-5 h-5" />
-                  <span>{place.address}</span>
+          {/* Place Information Grid */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Main Info Card */}
+            <motion.div variants={staggerItem} className="lg:col-span-2">
+              <Card>
+                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Place Information</h2>
+                <div className="space-y-4">
+                  {/* Address */}
+                  <div className="flex items-start space-x-3">
+                    <MapPin className="w-5 h-5 text-orange-500 mt-1 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-gray-700">Address</p>
+                      <p className="text-gray-600">{place.address}</p>
+                      {place.location?.coordinates && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          {place.location.coordinates[1].toFixed(6)}, {place.location.coordinates[0].toFixed(6)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Cuisine */}
+                  <div className="flex items-start space-x-3">
+                    <div className="w-5 h-5 text-orange-500 mt-1 flex-shrink-0 text-xl">🍽️</div>
+                    <div>
+                      <p className="font-medium text-gray-700">Cuisine</p>
+                      <p className="text-gray-600">{place.cuisine}</p>
+                    </div>
+                  </div>
+
+                  {/* Price Range */}
+                  <div className="flex items-start space-x-3">
+                    <div className="w-5 h-5 text-orange-500 mt-1 flex-shrink-0 text-xl">💰</div>
+                    <div>
+                      <p className="font-medium text-gray-700">Price Range</p>
+                      <p className="text-gray-600">
+                        {'$'.repeat(place.priceRange)}
+                        <span className="text-gray-400">{'$'.repeat(4 - place.priceRange)}</span>
+                        <span className="ml-2 text-sm text-gray-500">
+                          ({place.priceRange === 1 ? 'Budget' : place.priceRange === 2 ? 'Moderate' : place.priceRange === 3 ? 'Upscale' : 'Fine Dining'})
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Rating */}
+                  <div className="flex items-start space-x-3">
+                    <Star className="w-5 h-5 text-orange-500 mt-1 flex-shrink-0 fill-orange-500" />
+                    <div>
+                      <p className="font-medium text-gray-700">Rating</p>
+                      <div className="flex items-center space-x-2">
+                        <div className="flex items-center">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-4 h-4 ${
+                                star <= Math.round(place.averageRating)
+                                  ? 'fill-yellow-500 text-yellow-500'
+                                  : 'fill-gray-300 text-gray-300'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-gray-600">{place.averageRating.toFixed(1)}</span>
+                        <span className="text-sm text-gray-500">({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Added By */}
+                  <div className="flex items-start space-x-3 pt-3 border-t">
+                    <div className="w-5 h-5 text-orange-500 mt-1 flex-shrink-0 text-xl">👤</div>
+                    <div>
+                      <p className="font-medium text-gray-700">Added By</p>
+                      <p className="text-gray-600">{place.createdBy?.name || 'Unknown'}</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {new Date(place.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleCopyMapLink}
-                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    aria-label="Copy map link"
-                    title="Copy Google Maps link"
+              </Card>
+            </motion.div>
+
+            {/* Quick Actions Sidebar */}
+            <motion.div variants={staggerItem}>
+              <Card>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+                <div className="space-y-3">
+                  <Button
+                    onClick={() => setShowReviewModal(true)}
+                    className="w-full"
                   >
-                    <LinkIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleShare}
-                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    aria-label="Share"
-                  >
-                    <Share2 className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={handleToggleBookmark}
-                    className={`p-2 rounded-full transition-all ${
-                      isSaved
-                        ? 'bg-orange-500 text-white hover:bg-orange-600'
-                        : 'hover:bg-gray-100 text-gray-600'
-                    }`}
-                    aria-label={isSaved ? 'Remove from saved places' : 'Save place'}
-                  >
-                    <Bookmark
-                      className={`w-5 h-5 ${isSaved ? 'fill-white' : ''}`}
-                    />
-                  </motion.button>
-                  <Button onClick={() => setShowReviewModal(true)}>
                     <Star className="w-4 h-4 mr-2" />
                     Write Review
                   </Button>
-                  <Button variant="secondary" onClick={() => router.push('/events/create')}>
+                  <Button
+                    variant="secondary"
+                    onClick={() => router.push('/events/new')}
+                    className="w-full"
+                  >
                     <Calendar className="w-4 h-4 mr-2" />
                     Create Event
                   </Button>
+                  <button
+                    onClick={handleToggleBookmark}
+                    className={`w-full px-4 py-2 rounded-lg border-2 transition-colors flex items-center justify-center ${
+                      isSaved
+                        ? 'bg-orange-500 text-white border-orange-500'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-orange-500'
+                    }`}
+                  >
+                    <Bookmark className={`w-4 h-4 mr-2 ${isSaved ? 'fill-white' : ''}`} />
+                    {isSaved ? 'Saved' : 'Save Place'}
+                  </button>
+                  <button
+                    onClick={handleCopyMapLink}
+                    className="w-full px-4 py-2 rounded-lg border-2 border-gray-300 bg-white text-gray-700 hover:border-orange-500 transition-colors flex items-center justify-center"
+                  >
+                    <LinkIcon className="w-4 h-4 mr-2" />
+                    Get Directions
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="w-full px-4 py-2 rounded-lg border-2 border-gray-300 bg-white text-gray-700 hover:border-orange-500 transition-colors flex items-center justify-center"
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </button>
                 </div>
-              </div>
-            </Card>
-          </motion.div>
+
+                {/* Stats */}
+                <div className="mt-6 pt-6 border-t">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Statistics</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Total Reviews</span>
+                      <span className="font-semibold text-orange-600">{reviews.length}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Average Rating</span>
+                      <span className="font-semibold text-orange-600">{place.averageRating.toFixed(1)} ⭐</span>
+                    </div>
+                    {place.images && place.images.length > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Photos</span>
+                        <span className="font-semibold text-orange-600">{place.images.length}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          </div>
 
           {/* Description */}
           {place.description && (

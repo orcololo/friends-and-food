@@ -46,11 +46,41 @@ export default function MapView({
   center = [0.0349, -51.0694], // Macapá-AP, Brazil - Note: Leaflet uses [lat, lng] not [lng, lat]
   zoom = 13
 }: MapViewProps) {
+  // Calculate valid markers
+  const validPlaces = places.filter(p => p.location?.coordinates && Array.isArray(p.location.coordinates) && p.location.coordinates.length === 2);
+  const validEvents = events.filter(e => e.location?.coordinates && Array.isArray(e.location.coordinates) && e.location.coordinates.length === 2);
+
+  // Calculate center based on markers if available
+  let mapCenter = center;
+  let mapZoom = zoom;
+
+  if (validPlaces.length > 0 || validEvents.length > 0) {
+    const allCoords = [
+      ...validPlaces.map(p => p.location.coordinates),
+      ...validEvents.map(e => e.location.coordinates)
+    ];
+
+    // Calculate average position
+    const avgLng = allCoords.reduce((sum, coord) => sum + coord[0], 0) / allCoords.length;
+    const avgLat = allCoords.reduce((sum, coord) => sum + coord[1], 0) / allCoords.length;
+    mapCenter = [avgLat, avgLng];
+    mapZoom = 12;
+  }
+
+  console.log('MapView render:', {
+    totalPlaces: places.length,
+    totalEvents: events.length,
+    validPlaces: validPlaces.length,
+    validEvents: validEvents.length,
+    center: mapCenter,
+    zoom: mapZoom
+  });
+
   return (
     <div className="relative w-full h-full">
       <MapContainer
-        center={center}
-        zoom={zoom}
+        center={mapCenter}
+        zoom={mapZoom}
         className="w-full h-full rounded-lg"
         style={{ minHeight: '400px' }}
       >
@@ -58,11 +88,11 @@ export default function MapView({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <MapUpdater center={center} zoom={zoom} />
+        <MapUpdater center={mapCenter} zoom={mapZoom} />
 
         {/* Place Markers */}
-        {places.map((place) => {
-          if (place.location?.coordinates) {
+        {validPlaces.map((place) => {
+          try {
             // Convert from GeoJSON [lng, lat] to Leaflet [lat, lng]
             const position: [number, number] = [
               place.location.coordinates[1],
@@ -83,13 +113,15 @@ export default function MapView({
                 </Popup>
               </Marker>
             );
+          } catch (error) {
+            console.error('Error rendering place marker:', place._id, error);
+            return null;
           }
-          return null;
         })}
 
         {/* Event Markers */}
-        {events.map((event) => {
-          if (event.location?.coordinates) {
+        {validEvents.map((event) => {
+          try {
             // Convert from GeoJSON [lng, lat] to Leaflet [lat, lng]
             const position: [number, number] = [
               event.location.coordinates[1],
@@ -109,9 +141,19 @@ export default function MapView({
                 </Popup>
               </Marker>
             );
+          } catch (error) {
+            console.error('Error rendering event marker:', event._id, error);
+            return null;
           }
-          return null;
         })}
+
+        {/* Show message if no markers */}
+        {validPlaces.length === 0 && validEvents.length === 0 && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-4 rounded-lg shadow-lg z-[1000] text-center">
+            <p className="text-gray-700 font-medium mb-2">No markers to display</p>
+            <p className="text-sm text-gray-500">Add places or create events to see them on the map</p>
+          </div>
+        )}
       </MapContainer>
 
       <style jsx global>{`
