@@ -38,8 +38,8 @@ export default function MapPage() {
   const loadMapData = async () => {
     try {
       const [placesData, eventsData] = await Promise.all([
-        api.getPlaces('limit=50'),
-        api.getEvents('limit=50'),
+        api.getPlaces(1, 50),
+        api.getEvents(1, 50),
       ]);
 
       setPlaces(placesData.data.places);

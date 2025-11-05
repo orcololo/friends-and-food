@@ -37,16 +37,30 @@ export const api = {
   updateUser: (id: string, data: any) => apiRequest(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   // Places
-  getPlaces: (params?: string) => apiRequest(`/places${params ? `?${params}` : ''}`),
+  getPlaces: (page?: number, limit?: number) => {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
+    return apiRequest(`/places${params.toString() ? `?${params.toString()}` : ''}`);
+  },
   getPlace: (id: string) => apiRequest(`/places/${id}`),
   createPlace: (data: any) => apiRequest('/places', { method: 'POST', body: JSON.stringify(data) }),
+  updatePlace: (id: string, data: any) => apiRequest(`/places/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePlace: (id: string) => apiRequest(`/places/${id}`, { method: 'DELETE' }),
   getNearbyPlaces: (lng: number, lat: number, maxDistance?: number) =>
     apiRequest(`/places/nearby?lng=${lng}&lat=${lat}${maxDistance ? `&maxDistance=${maxDistance}` : ''}`),
 
   // Events
-  getEvents: (params?: string) => apiRequest(`/events${params ? `?${params}` : ''}`),
+  getEvents: (page?: number, limit?: number) => {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
+    return apiRequest(`/events${params.toString() ? `?${params.toString()}` : ''}`);
+  },
   getEvent: (id: string) => apiRequest(`/events/${id}`),
   createEvent: (data: any) => apiRequest('/events', { method: 'POST', body: JSON.stringify(data) }),
+  updateEvent: (id: string, data: any) => apiRequest(`/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteEvent: (id: string) => apiRequest(`/events/${id}`, { method: 'DELETE' }),
   attendEvent: (id: string) => apiRequest(`/events/${id}/attend`, { method: 'POST' }),
   unattendEvent: (id: string) => apiRequest(`/events/${id}/attend`, { method: 'DELETE' }),
 
@@ -60,9 +74,16 @@ export const api = {
   unlikePost: (id: string) => apiRequest(`/posts/${id}/like`, { method: 'DELETE' }),
 
   // Groups
-  getGroups: () => apiRequest('/groups'),
+  getGroups: (page?: number, limit?: number) => {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
+    return apiRequest(`/groups${params.toString() ? `?${params.toString()}` : ''}`);
+  },
   getGroup: (id: string) => apiRequest(`/groups/${id}`),
   createGroup: (data: any) => apiRequest('/groups', { method: 'POST', body: JSON.stringify(data) }),
+  updateGroup: (id: string, data: any) => apiRequest(`/groups/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteGroup: (id: string) => apiRequest(`/groups/${id}`, { method: 'DELETE' }),
 
   // Friends
   getFriends: () => apiRequest('/friends'),

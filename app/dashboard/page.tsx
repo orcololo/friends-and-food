@@ -29,8 +29,8 @@ export default function DashboardPage() {
     try {
       const [userData, postsData, eventsData] = await Promise.all([
         api.getMe(),
-        api.getPosts('limit=10'),
-        api.getEvents('limit=5'),
+        api.getPosts(),
+        api.getEvents(1, 5),
       ]);
 
       setUser(userData.data);
