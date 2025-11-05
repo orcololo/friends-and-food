@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence, useScroll } from 'framer-motion';
 import { Home, Map, UtensilsCrossed, Calendar, Users, Menu, X } from 'lucide-react';
 import NotificationBell from './NotificationBell';
+import ThemeToggle from './ThemeToggle';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -62,8 +63,8 @@ export default function Navbar() {
       transition={{ duration: 0.3 }}
       className={`sticky top-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? 'bg-white/80 backdrop-blur-lg shadow-lg'
-          : 'bg-white shadow-md'
+          ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg shadow-lg'
+          : 'bg-white dark:bg-gray-900 shadow-md'
       }`}
     >
       <div className="container mx-auto px-4">
@@ -94,10 +95,10 @@ export default function Navbar() {
                     className="relative px-4 py-2 rounded-lg transition-colors flex items-center group"
                   >
                     <IconComponent className={`w-5 h-5 mr-2 transition-colors ${
-                      isActive ? 'text-white' : 'text-gray-600 group-hover:text-orange-500'
+                      isActive ? 'text-white' : 'text-gray-600 dark:text-gray-300 group-hover:text-orange-500'
                     }`} />
                     <span className={`transition-colors ${
-                      isActive ? 'text-white' : 'text-gray-700 group-hover:text-orange-500'
+                      isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300 group-hover:text-orange-500'
                     }`}>
                       {link.label}
                     </span>
@@ -117,6 +118,7 @@ export default function Navbar() {
 
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             <NotificationBell />
 
             {/* User Avatar */}
@@ -134,12 +136,12 @@ export default function Navbar() {
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               {isMobileMenuOpen ? (
-                <X className="w-6 h-6 text-gray-700" />
+                <X className="w-6 h-6 text-gray-700 dark:text-gray-300" />
               ) : (
-                <Menu className="w-6 h-6 text-gray-700" />
+                <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
               )}
             </motion.button>
           </div>
@@ -154,7 +156,7 @@ export default function Navbar() {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed top-16 right-0 bottom-0 w-64 bg-white shadow-2xl md:hidden overflow-y-auto"
+            className="fixed top-16 right-0 bottom-0 w-64 bg-white dark:bg-gray-900 shadow-2xl md:hidden overflow-y-auto"
           >
             <div className="p-4 space-y-2">
               {navLinks.map((link) => {
@@ -167,7 +169,7 @@ export default function Navbar() {
                       className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                         isActive
                           ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
-                          : 'text-gray-700 hover:bg-orange-50'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-gray-800'
                       }`}
                     >
                       <IconComponent className="w-5 h-5" />
