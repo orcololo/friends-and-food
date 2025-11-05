@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, MapPin, Heart, Calendar, Share2, ImageIcon, X, Upload, Bookmark } from 'lucide-react';
+import { Star, MapPin, Heart, Calendar, Share2, ImageIcon, X, Upload, Bookmark, Link as LinkIcon } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -11,6 +11,7 @@ import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import PhotoGallery from '@/components/ui/PhotoGallery';
 import SafeContent from '@/components/ui/SafeContent';
+import ImageLightbox from '@/components/ui/ImageLightbox';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/utils/api';
 import { compressImages, isImageFile } from '@/lib/utils/imageCompression';
@@ -41,6 +42,9 @@ export default function PlaceDetailPage() {
   const [isSaved, setIsSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [showLightbox, setShowLightbox] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const REVIEW_MAX_LENGTH = 1000;
   const MAX_REVIEW_IMAGES = 5;
 
@@ -234,6 +238,20 @@ export default function PlaceDetailPage() {
     }
   }, [place, showToast]);
 
+  const handleCopyMapLink = useCallback(() => {
+    if (!place?.location?.coordinates) {
+      showToast('Location coordinates not available', 'error');
+      return;
+    }
+
+    // Google Maps link format: https://www.google.com/maps?q=lat,lng
+    const [lng, lat] = place.location.coordinates;
+    const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+
+    navigator.clipboard.writeText(mapUrl);
+    showToast('Map link copied to clipboard!', 'success');
+  }, [place, showToast]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -346,11 +364,21 @@ export default function PlaceDetailPage() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={handleCopyMapLink}
+                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    aria-label="Copy map link"
+                    title="Copy Google Maps link"
+                  >
+                    <LinkIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={handleShare}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                     aria-label="Share"
                   >
-                    <Share2 className="w-5 h-5 text-gray-600" />
+                    <Share2 className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.1 }}
@@ -501,12 +529,21 @@ export default function PlaceDetailPage() {
                               className="w-full aspect-square object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                               whileHover={{ scale: 1.05 }}
                               onClick={() => {
-                                // Could open in lightbox/gallery
+                                setLightboxImages(review.images);
+                                setLightboxIndex(idx);
+                                setShowLightbox(true);
                               }}
                             />
                           ))}
                           {review.images.length > 3 && (
-                            <div className="relative">
+                            <div
+                              className="relative cursor-pointer"
+                              onClick={() => {
+                                setLightboxImages(review.images);
+                                setLightboxIndex(3);
+                                setShowLightbox(true);
+                              }}
+                            >
                               <img
                                 src={review.images[3]}
                                 alt="More images"
@@ -676,6 +713,15 @@ export default function PlaceDetailPage() {
           </motion.div>
         </motion.div>
       </Modal>
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        images={lightboxImages}
+        isOpen={showLightbox}
+        currentIndex={lightboxIndex}
+        onClose={() => setShowLightbox(false)}
+        onNavigate={setLightboxIndex}
+      />
     </div>
   );
 }

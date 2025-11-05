@@ -3,13 +3,14 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Users, MapPin, Clock, Share2, CheckCircle2, XCircle, MessageCircle } from 'lucide-react';
+import { Calendar, Users, MapPin, Clock, Share2, CheckCircle2, XCircle, MessageCircle, Download } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/utils/api';
+import { downloadICS } from '@/lib/utils/calendarExport';
 import {
   fadeInUp,
   staggerContainer,
@@ -113,6 +114,36 @@ export default function EventDetailPage() {
       navigator.clipboard.writeText(window.location.href);
       showToast('Link copied to clipboard!', 'success');
     }
+  }, [event, showToast]);
+
+  const handleExportToCalendar = useCallback(() => {
+    if (!event) return;
+
+    // Parse event date and time
+    const eventDate = new Date(event.date);
+    const [hours, minutes] = event.time.split(':').map(Number);
+    eventDate.setHours(hours, minutes, 0, 0);
+
+    // Set end time (default to 2 hours after start)
+    const endDate = new Date(eventDate);
+    endDate.setHours(eventDate.getHours() + 2);
+
+    const location = event.placeId?.address || event.location || '';
+    const description = event.description || `Event: ${event.title}`;
+
+    downloadICS(
+      {
+        title: event.title,
+        description,
+        location,
+        startDate: eventDate,
+        endDate,
+        url: window.location.href,
+      },
+      `${event.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`
+    );
+
+    showToast('Event downloaded! Add it to your calendar app.', 'success');
   }, [event, showToast]);
 
   const handleOpenComments = async () => {
@@ -258,6 +289,16 @@ export default function EventDetailPage() {
               </motion.p>
             </div>
             <motion.div variants={scaleIn} className="flex items-center space-x-3">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleExportToCalendar}
+                className="p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
+                aria-label="Export to calendar"
+                title="Add to calendar"
+              >
+                <Download className="w-6 h-6" />
+              </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
