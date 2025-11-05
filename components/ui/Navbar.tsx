@@ -7,6 +7,7 @@ import { motion, AnimatePresence, useScroll } from 'framer-motion';
 import { Home, Map, UtensilsCrossed, Calendar, Users, Menu, X } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import ThemeToggle from './ThemeToggle';
+import SearchBar from './SearchBar';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -114,6 +115,11 @@ export default function Navbar() {
                 </Link>
               );
             })}
+          </div>
+
+          {/* Search Bar - Desktop */}
+          <div className="hidden lg:block flex-1 max-w-md mx-4">
+            <SearchBar />
           </div>
 
           {/* Right side actions */}

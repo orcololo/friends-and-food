@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, MapPin, Heart, Calendar, Share2, ImageIcon, X, Upload, Bookmark, Link as LinkIcon } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
@@ -24,6 +25,16 @@ import {
   hoverLift,
   skeletonPulse,
 } from '@/lib/utils/animations';
+
+// Dynamically import MapView to avoid SSR issues with Leaflet
+const MapView = dynamic(() => import('@/components/map/MapView'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-64 flex items-center justify-center bg-gray-100 rounded-lg">
+      <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  ),
+});
 
 export default function PlaceDetailPage() {
   const router = useRouter();
@@ -541,6 +552,41 @@ export default function PlaceDetailPage() {
                   </button>
                 </div>
                 <PhotoGallery images={place.images} alt={place.name} />
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Location Map */}
+          {place.location?.coordinates && (
+            <motion.div variants={staggerItem}>
+              <Card>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                    <MapPin className="w-6 h-6 text-orange-500 mr-2" />
+                    Location
+                  </h2>
+                  <button
+                    onClick={handleCopyMapLink}
+                    className="text-orange-500 hover:text-orange-600 font-medium flex items-center text-sm"
+                  >
+                    <LinkIcon className="w-4 h-4 mr-1" />
+                    Get Directions
+                  </button>
+                </div>
+                <div className="h-64 rounded-lg overflow-hidden border border-gray-200">
+                  <MapView
+                    places={[place]}
+                    events={[]}
+                    center={[place.location.coordinates[1], place.location.coordinates[0]]}
+                    zoom={15}
+                  />
+                </div>
+                <div className="mt-3 text-sm text-gray-600">
+                  <p className="font-medium">{place.address}</p>
+                  <p className="text-gray-500 mt-1">
+                    {place.location.coordinates[1].toFixed(6)}, {place.location.coordinates[0].toFixed(6)}
+                  </p>
+                </div>
               </Card>
             </motion.div>
           )}
