@@ -205,6 +205,43 @@ export default function NewPlacePage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleGetMyLocation = () => {
+    if (!navigator.geolocation) {
+      showToast('Geolocation is not supported by your browser', 'error');
+      return;
+    }
+
+    showToast('Getting your location...', 'info');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setFormData(prev => ({
+          ...prev,
+          latitude: latitude.toFixed(6),
+          longitude: longitude.toFixed(6),
+        }));
+        showToast('Location retrieved successfully!', 'success');
+      },
+      (error) => {
+        let message = 'Failed to get location';
+        if (error.code === error.PERMISSION_DENIED) {
+          message = 'Location permission denied. Please enable location access.';
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          message = 'Location information unavailable';
+        } else if (error.code === error.TIMEOUT) {
+          message = 'Location request timed out';
+        }
+        showToast(message, 'error');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -286,29 +323,44 @@ export default function NewPlacePage() {
                 </motion.div>
 
                 {/* Coordinates */}
-                <motion.div variants={staggerItem} className="grid grid-cols-2 gap-4">
-                  <Input
-                    label="Latitude"
-                    type="number"
-                    step="any"
-                    placeholder="e.g., 0.0349"
-                    value={formData.latitude}
-                    onChange={(e) => handleInputChange('latitude', e.target.value)}
-                    required
-                  />
-                  <Input
-                    label="Longitude"
-                    type="number"
-                    step="any"
-                    placeholder="e.g., -51.0694"
-                    value={formData.longitude}
-                    onChange={(e) => handleInputChange('longitude', e.target.value)}
-                    required
-                  />
+                <motion.div variants={staggerItem}>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Location Coordinates
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleGetMyLocation}
+                      className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center space-x-1"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      <span>Use My Location</span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      label="Latitude"
+                      type="number"
+                      step="any"
+                      placeholder="e.g., 0.0349"
+                      value={formData.latitude}
+                      onChange={(e) => handleInputChange('latitude', e.target.value)}
+                      required
+                    />
+                    <Input
+                      label="Longitude"
+                      type="number"
+                      step="any"
+                      placeholder="e.g., -51.0694"
+                      value={formData.longitude}
+                      onChange={(e) => handleInputChange('longitude', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 Tip: Find coordinates on <a href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">Google Maps</a> by right-clicking a location, or use your current location
+                  </p>
                 </motion.div>
-                <p className="text-xs text-gray-500 -mt-4">
-                  You can find coordinates on Google Maps by right-clicking a location
-                </p>
 
                 {/* Cuisine Type */}
                 <motion.div variants={staggerItem}>
