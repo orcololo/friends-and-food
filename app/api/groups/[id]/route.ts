@@ -5,11 +5,12 @@ import { authenticate, AuthenticatedRequest } from '@/lib/middleware/auth';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 
 // GET single group by ID
-async function getHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function getHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const group = await Group.findById(params.id)
+    const group = await Group.findById(id)
       .populate('createdBy', 'name username profileImage')
       .populate('members', 'name username profileImage');
 
@@ -25,11 +26,12 @@ async function getHandler(req: AuthenticatedRequest, { params }: { params: { id:
 }
 
 // PUT update group
-async function putHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function putHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const group = await Group.findById(params.id);
+    const group = await Group.findById(id);
 
     if (!group) {
       return errorResponse('Group not found', 404);
@@ -41,7 +43,7 @@ async function putHandler(req: AuthenticatedRequest, { params }: { params: { id:
     }
 
     const body = await req.json();
-    const updatedGroup = await Group.findByIdAndUpdate(params.id, body, { new: true })
+    const updatedGroup = await Group.findByIdAndUpdate(id, body, { new: true })
       .populate('createdBy', 'name username profileImage')
       .populate('members', 'name username profileImage');
 

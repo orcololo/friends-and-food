@@ -7,9 +7,10 @@ import { successResponse, errorResponse } from '@/lib/utils/response';
 import { emitToGroup } from '@/lib/socket';
 
 // GET group posts (feed)
-async function getHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function getHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -17,7 +18,7 @@ async function getHandler(req: AuthenticatedRequest, { params }: { params: { id:
     const skip = (page - 1) * limit;
 
     // Check if user is member
-    const group = await Group.findById(params.id);
+    const group = await Group.findById(id);
     if (!group) {
       return errorResponse('Group not found', 404);
     }
@@ -26,7 +27,7 @@ async function getHandler(req: AuthenticatedRequest, { params }: { params: { id:
       return errorResponse('You must be a member to view group posts', 403);
     }
 
-    const posts = await GroupPost.find({ groupId: params.id })
+    const posts = await GroupPost.find({ groupId: id })
       .populate('userId', 'name username profileImage')
       .populate('likes', 'name username')
       .populate('comments.userId', 'name username profileImage')
@@ -34,7 +35,7 @@ async function getHandler(req: AuthenticatedRequest, { params }: { params: { id:
       .limit(limit)
       .skip(skip);
 
-    const total = await GroupPost.countDocuments({ groupId: params.id });
+    const total = await GroupPost.countDocuments({ groupId: id });
 
     return successResponse({
       posts,
@@ -52,9 +53,10 @@ async function getHandler(req: AuthenticatedRequest, { params }: { params: { id:
 }
 
 // POST create group post
-async function postHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function postHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
     const body = await req.json();
     const { content, images } = body;
@@ -64,7 +66,7 @@ async function postHandler(req: AuthenticatedRequest, { params }: { params: { id
     }
 
     // Check if user is member
-    const group = await Group.findById(params.id);
+    const group = await Group.findById(id);
     if (!group) {
       return errorResponse('Group not found', 404);
     }
@@ -74,7 +76,7 @@ async function postHandler(req: AuthenticatedRequest, { params }: { params: { id
     }
 
     const post = await GroupPost.create({
-      groupId: params.id,
+      groupId: id,
       userId: req.user!.userId,
       content,
       images: images || [],
@@ -84,7 +86,7 @@ async function postHandler(req: AuthenticatedRequest, { params }: { params: { id
 
     // Emit real-time post
     try {
-      emitToGroup(params.id, 'new-post', {
+      emitToGroup(id, 'new-post', {
         post,
       });
     } catch (socketError) {

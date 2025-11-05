@@ -94,6 +94,12 @@ export default function DashboardPage() {
 
   const handleLikePost = async (postId: string) => {
     try {
+      // Check current like state BEFORE optimistic update
+      const currentPost = posts.find((p) => p._id === postId);
+      const isLiked = currentPost?.likes?.some((like: any) =>
+        like && (like._id === user?._id || like === user?._id)
+      );
+
       // Optimistic update
       setPosts((prevPosts) =>
         prevPosts.map((post) => {
@@ -122,13 +128,7 @@ export default function DashboardPage() {
         })
       );
 
-      // Get current post state to determine action
-      const currentPost = posts.find((p) => p._id === postId);
-      const isLiked = currentPost?.likes?.some((like: any) =>
-        like && (like._id === user?._id || like === user?._id)
-      );
-
-      // Call API
+      // Call API based on ORIGINAL state
       if (isLiked) {
         await api.unlikePost(postId);
       } else {

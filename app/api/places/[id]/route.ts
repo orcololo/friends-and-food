@@ -6,18 +6,19 @@ import { authenticate, AuthenticatedRequest } from '@/lib/middleware/auth';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 
 // GET single place by ID
-async function getHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function getHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
 
-    const place = await Place.findById(params.id).populate('createdBy', 'name username profileImage');
+    const { id } = await params;
+    const place = await Place.findById(id).populate('createdBy', 'name username profileImage');
 
     if (!place) {
       return errorResponse('Place not found', 404);
     }
 
     // Get reviews for this place
-    const reviews = await Review.find({ placeId: params.id })
+    const reviews = await Review.find({ placeId: id })
       .populate('userId', 'name username profileImage')
       .sort({ createdAt: -1 })
       .limit(10);
@@ -30,11 +31,12 @@ async function getHandler(req: AuthenticatedRequest, { params }: { params: { id:
 }
 
 // PUT update place
-async function putHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function putHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
 
-    const place = await Place.findById(params.id);
+    const { id } = await params;
+    const place = await Place.findById(id);
 
     if (!place) {
       return errorResponse('Place not found', 404);
@@ -46,7 +48,7 @@ async function putHandler(req: AuthenticatedRequest, { params }: { params: { id:
     }
 
     const body = await req.json();
-    const updatedPlace = await Place.findByIdAndUpdate(params.id, body, { new: true }).populate(
+    const updatedPlace = await Place.findByIdAndUpdate(id, body, { new: true }).populate(
       'createdBy',
       'name username profileImage'
     );
@@ -59,11 +61,12 @@ async function putHandler(req: AuthenticatedRequest, { params }: { params: { id:
 }
 
 // DELETE place
-async function deleteHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function deleteHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
 
-    const place = await Place.findById(params.id);
+    const { id } = await params;
+    const place = await Place.findById(id);
 
     if (!place) {
       return errorResponse('Place not found', 404);
@@ -74,7 +77,7 @@ async function deleteHandler(req: AuthenticatedRequest, { params }: { params: { 
       return errorResponse('Not authorized to delete this place', 403);
     }
 
-    await Place.findByIdAndDelete(params.id);
+    await Place.findByIdAndDelete(id);
 
     return successResponse({ message: 'Place deleted successfully' });
   } catch (error: any) {

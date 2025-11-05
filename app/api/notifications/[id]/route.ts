@@ -5,12 +5,13 @@ import { authenticate, AuthenticatedRequest } from '@/lib/middleware/auth';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 
 // PUT mark notification as read
-async function putHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function putHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
     const notification = await Notification.findOne({
-      _id: params.id,
+      _id: id,
       userId: req.user?.userId,
     });
 
@@ -29,12 +30,13 @@ async function putHandler(req: AuthenticatedRequest, { params }: { params: { id:
 }
 
 // DELETE notification
-async function deleteHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function deleteHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
     const notification = await Notification.findOneAndDelete({
-      _id: params.id,
+      _id: id,
       userId: req.user?.userId,
     });
 

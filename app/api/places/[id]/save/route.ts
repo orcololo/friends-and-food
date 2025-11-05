@@ -5,12 +5,12 @@ import { authenticate, AuthenticatedRequest } from '@/lib/middleware/auth';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 
 // POST save/bookmark a place
-async function postHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function postHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
 
     const userId = req.user?.userId;
-    const placeId = params.id;
+    const { id: placeId } = await params;
 
     // Check if already saved
     const existing = await SavedPlace.findOne({ userId, placeId });
@@ -32,12 +32,12 @@ async function postHandler(req: AuthenticatedRequest, { params }: { params: { id
 }
 
 // DELETE unsave/remove bookmark from a place
-async function deleteHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function deleteHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
 
     const userId = req.user?.userId;
-    const placeId = params.id;
+    const { id: placeId } = await params;
 
     const savedPlace = await SavedPlace.findOneAndDelete({ userId, placeId });
 
