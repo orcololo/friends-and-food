@@ -1,8 +1,23 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import React from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default marker icons in React Leaflet
+const createCustomIcon = (emoji: string) => {
+  return L.divIcon({
+    html: `<div style="font-size: 24px;">${emoji}</div>`,
+    className: 'custom-marker',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30],
+  });
+};
+
+const placeIcon = createCustomIcon('🍽️');
+const eventIcon = createCustomIcon('📅');
 
 interface MapViewProps {
   places?: any[];
@@ -11,107 +26,97 @@ interface MapViewProps {
   zoom?: number;
 }
 
-export default function MapView({ places = [], events = [], center = [-74.006, 40.7128], zoom = 12 }: MapViewProps) {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
+// Component to update map view when center/zoom changes
+function MapUpdater({ center, zoom }: { center: [number, number]; zoom: number }) {
+  const map = useMap();
+  React.useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, zoom, map]);
+  return null;
+}
 
-  useEffect(() => {
-    if (!mapContainer.current) return;
-
-    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
-
-    // If no token is set, show a placeholder message
-    if (!token) {
-      console.warn('Mapbox token not found. Please set NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN in .env.local');
-      return;
-    }
-
-    mapboxgl.accessToken = token;
-
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: center,
-      zoom: zoom,
-    });
-
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-    map.current.on('load', () => {
-      setMapLoaded(true);
-    });
-
-    return () => {
-      map.current?.remove();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!mapLoaded || !map.current) return;
-
-    // Add markers for places
-    places.forEach((place) => {
-      if (place.location?.coordinates) {
-        const el = document.createElement('div');
-        el.className = 'marker';
-        el.innerHTML = '🍽️';
-        el.style.fontSize = '24px';
-        el.style.cursor = 'pointer';
-
-        new mapboxgl.Marker(el)
-          .setLngLat(place.location.coordinates)
-          .setPopup(
-            new mapboxgl.Popup({ offset: 25 }).setHTML(
-              `<div class="p-2">
-                <h3 class="font-bold">${place.name}</h3>
-                <p class="text-sm">${place.cuisine}</p>
-                <p class="text-sm">⭐ ${place.averageRating.toFixed(1)}</p>
-              </div>`
-            )
-          )
-          .addTo(map.current);
-      }
-    });
-
-    // Add markers for events
-    events.forEach((event) => {
-      if (event.location?.coordinates) {
-        const el = document.createElement('div');
-        el.className = 'marker';
-        el.innerHTML = '📅';
-        el.style.fontSize = '24px';
-        el.style.cursor = 'pointer';
-
-        new mapboxgl.Marker(el)
-          .setLngLat(event.location.coordinates)
-          .setPopup(
-            new mapboxgl.Popup({ offset: 25 }).setHTML(
-              `<div class="p-2">
-                <h3 class="font-bold">${event.title}</h3>
-                <p class="text-sm">${event.placeId?.name || ''}</p>
-                <p class="text-sm">${new Date(event.date).toLocaleDateString()}</p>
-              </div>`
-            )
-          )
-          .addTo(map.current);
-      }
-    });
-  }, [mapLoaded, places, events]);
-
+export default function MapView({
+  places = [],
+  events = [],
+  center = [40.7128, -74.006], // Note: Leaflet uses [lat, lng] not [lng, lat]
+  zoom = 12
+}: MapViewProps) {
   return (
     <div className="relative w-full h-full">
-      <div ref={mapContainer} className="w-full h-full rounded-lg" />
-      {!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
-          <div className="text-center p-6">
-            <p className="text-lg text-gray-600 mb-2">Map Preview</p>
-            <p className="text-sm text-gray-500">
-              Add your Mapbox token to .env.local to enable the map
-            </p>
-          </div>
-        </div>
-      )}
+      <MapContainer
+        center={center}
+        zoom={zoom}
+        className="w-full h-full rounded-lg"
+        style={{ minHeight: '400px' }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <MapUpdater center={center} zoom={zoom} />
+
+        {/* Place Markers */}
+        {places.map((place) => {
+          if (place.location?.coordinates) {
+            // Convert from GeoJSON [lng, lat] to Leaflet [lat, lng]
+            const position: [number, number] = [
+              place.location.coordinates[1],
+              place.location.coordinates[0],
+            ];
+
+            return (
+              <Marker key={place._id} position={position} icon={placeIcon}>
+                <Popup>
+                  <div className="p-2">
+                    <h3 className="font-bold text-base mb-1">{place.name}</h3>
+                    <p className="text-sm text-gray-600">{place.cuisine}</p>
+                    <p className="text-sm text-gray-600">
+                      ⭐ {place.averageRating?.toFixed(1) || 'N/A'}
+                    </p>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          }
+          return null;
+        })}
+
+        {/* Event Markers */}
+        {events.map((event) => {
+          if (event.location?.coordinates) {
+            // Convert from GeoJSON [lng, lat] to Leaflet [lat, lng]
+            const position: [number, number] = [
+              event.location.coordinates[1],
+              event.location.coordinates[0],
+            ];
+
+            return (
+              <Marker key={event._id} position={position} icon={eventIcon}>
+                <Popup>
+                  <div className="p-2">
+                    <h3 className="font-bold text-base mb-1">{event.title}</h3>
+                    <p className="text-sm text-gray-600">{event.placeId?.name || ''}</p>
+                    <p className="text-sm text-gray-600">
+                      {new Date(event.date).toLocaleDateString()}
+                    </p>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          }
+          return null;
+        })}
+      </MapContainer>
+
+      <style jsx global>{`
+        .custom-marker {
+          background: transparent;
+          border: none;
+        }
+        .leaflet-popup-content-wrapper {
+          border-radius: 8px;
+        }
+      `}</style>
     </div>
   );
 }

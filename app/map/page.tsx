@@ -8,7 +8,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { api } from '@/lib/utils/api';
 
-// Dynamically import MapView to avoid SSR issues
+// Dynamically import MapView to avoid SSR issues with Leaflet
 const MapView = dynamic(() => import('@/components/map/MapView'), {
   ssr: false,
   loading: () => (

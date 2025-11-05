@@ -12,7 +12,7 @@ A full-stack Next.js application where friends can discover restaurants, plan di
 - **Reviews & Ratings**: 5-star rating system with comments and images
 - **Posts**: Social feed with likes and comments
 - **Groups**: Create and manage food communities
-- **Interactive Map**: Mapbox integration showing places and events with markers
+- **Interactive Map**: React Leaflet with OpenStreetMap showing places and events with markers
 - **Geospatial Queries**: Find nearby places and users using MongoDB geospatial features
 
 ### Technical Stack
@@ -22,7 +22,7 @@ A full-stack Next.js application where friends can discover restaurants, plan di
 - **Authentication**: JWT with bcryptjs
 - **Styling**: Tailwind CSS
 - **Animation**: Framer Motion
-- **Maps**: Mapbox GL JS
+- **Maps**: React Leaflet with OpenStreetMap (no API key required)
 
 ## Project Structure
 
@@ -80,7 +80,6 @@ friends-and-food/
 ### Prerequisites
 - Node.js 18+
 - MongoDB (local or MongoDB Atlas)
-- Mapbox account (for map features)
 
 ### Installation
 
@@ -107,9 +106,6 @@ friends-and-food/
    # JWT - Generate a secure random string
    JWT_SECRET=your-secure-secret-key-change-in-production
    JWT_EXPIRES_IN=7d
-
-   # Mapbox (Required for map features)
-   NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your-mapbox-token
 
    # Optional: Cloudinary for image uploads
    CLOUDINARY_CLOUD_NAME=your-cloud-name
@@ -327,17 +323,19 @@ All UI components use Tailwind CSS for styling and Framer Motion for animations:
 
 ## Map Integration
 
-The map view uses Mapbox GL JS:
+The map view uses React Leaflet with OpenStreetMap:
 
-1. Initialize map with center coordinates and zoom level
-2. Add markers for places (🍽️) and events (📅)
-3. Show popups on marker click with details
+1. Interactive map with OpenStreetMap tiles (no API key required)
+2. Custom emoji markers for places (🍽️) and events (📅)
+3. Clickable markers showing popups with details
 4. Filter view by places only, events only, or both
+5. Coordinate conversion from GeoJSON [lng, lat] to Leaflet [lat, lng]
 
-To enable maps:
-1. Sign up for a free Mapbox account at https://www.mapbox.com/
-2. Get your access token
-3. Add it to `.env.local` as `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`
+**Benefits of React Leaflet:**
+- No API key required (uses free OpenStreetMap tiles)
+- Lightweight and fast
+- Easy to customize markers and popups
+- Works seamlessly with Next.js when dynamically imported
 
 ## Next Steps & Future Enhancements
 
@@ -388,9 +386,10 @@ To enable maps:
 - Check network connectivity for Atlas
 
 ### Map Not Loading
-- Verify Mapbox token is set in `.env.local`
 - Check browser console for errors
-- Ensure `NEXT_PUBLIC_` prefix is present
+- Ensure dynamic import is used to avoid SSR issues with Leaflet
+- Verify Leaflet CSS is properly imported
+- Check that coordinates are in correct format [lat, lng] for Leaflet
 
 ### Authentication Errors
 - Clear localStorage and try logging in again
