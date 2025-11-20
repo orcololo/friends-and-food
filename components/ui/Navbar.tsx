@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence, useScroll } from 'framer-motion';
-import { Home, Map, UtensilsCrossed, Calendar, Users, Menu, X } from 'lucide-react';
+import { Home, Map, UtensilsCrossed, Calendar, Users, Menu, X, Search } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import ThemeToggle from './ThemeToggle';
 
@@ -50,6 +50,7 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/search', label: 'Search', icon: Search },
     { href: '/map', label: 'Map', icon: Map },
     { href: '/places', label: 'Places', icon: UtensilsCrossed },
     { href: '/events', label: 'Events', icon: Calendar },
@@ -118,6 +119,18 @@ export default function Navbar() {
 
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
+            {/* Search Button */}
+            <Link href="/search">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                title="Search"
+              >
+                <Search className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              </motion.button>
+            </Link>
+
             <ThemeToggle />
             <NotificationBell />
 

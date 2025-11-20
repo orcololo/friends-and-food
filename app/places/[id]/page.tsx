@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, MapPin, Heart, Calendar, Share2, ImageIcon, X, Upload, Bookmark, Link as LinkIcon } from 'lucide-react';
+import { Star, MapPin, Heart, Calendar, Share2, ImageIcon, X, Upload, Bookmark, Link as LinkIcon, Edit2, Trash2 } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -45,6 +45,9 @@ export default function PlaceDetailPage() {
   const [showLightbox, setShowLightbox] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [editingReview, setEditingReview] = useState<any>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const REVIEW_MAX_LENGTH = 1000;
   const MAX_REVIEW_IMAGES = 5;
 
@@ -55,9 +58,19 @@ export default function PlaceDetailPage() {
       return;
     }
 
+    loadCurrentUser();
     loadPlaceDetails();
     loadSavedStatus();
   }, [params.id]);
+
+  const loadCurrentUser = async () => {
+    try {
+      const response = await api.getMe();
+      setCurrentUser(response.data);
+    } catch (error) {
+      console.error('Failed to load current user:', error);
+    }
+  };
 
   const loadPlaceDetails = async () => {
     try {
@@ -182,15 +195,27 @@ export default function PlaceDetailPage() {
         imageUrls = await uploadReviewImages();
       }
 
-      await api.createReview({
-        placeId: params.id,
-        rating: reviewData.rating,
-        comment: reviewData.comment,
-        images: imageUrls,
-      });
+      if (editingReview) {
+        // Update existing review
+        await api.updateReview(editingReview._id, {
+          rating: reviewData.rating,
+          comment: reviewData.comment,
+          images: imageUrls.length > 0 ? imageUrls : editingReview.images,
+        });
+        showToast('Review updated successfully!', 'success');
+      } else {
+        // Create new review
+        await api.createReview({
+          placeId: params.id,
+          rating: reviewData.rating,
+          comment: reviewData.comment,
+          images: imageUrls,
+        });
+        showToast('Review submitted successfully!', 'success');
+      }
 
-      showToast('Review submitted successfully!', 'success');
       setShowReviewModal(false);
+      setEditingReview(null);
       setReviewData({ rating: 5, comment: '' });
       setReviewImages([]);
       setReviewImagePreviews([]);
@@ -200,6 +225,28 @@ export default function PlaceDetailPage() {
       showToast(error.message || 'Failed to submit review', 'error');
     } finally {
       setIsSubmittingReview(false);
+    }
+  };
+
+  const handleEditReview = (review: any) => {
+    setEditingReview(review);
+    setReviewData({
+      rating: review.rating,
+      comment: review.comment || '',
+    });
+    // Set existing images as previews
+    setReviewImagePreviews(review.images || []);
+    setShowReviewModal(true);
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    try {
+      await api.deleteReview(reviewId);
+      showToast('Review deleted successfully!', 'success');
+      setShowDeleteConfirm(null);
+      loadPlaceDetails();
+    } catch (error: any) {
+      showToast(error.message || 'Failed to delete review', 'error');
     }
   };
 
@@ -507,9 +554,33 @@ export default function PlaceDetailPage() {
                             </div>
                           </div>
                         </div>
-                        <span className="text-sm text-gray-500">
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-500">
+                            {new Date(review.createdAt).toLocaleDateString()}
+                          </span>
+                          {currentUser && review.userId?._id === currentUser._id && (
+                            <div className="flex items-center space-x-1">
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => handleEditReview(review)}
+                                className="p-2 rounded-full hover:bg-blue-100 text-blue-600 transition-colors"
+                                title="Edit review"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </motion.button>
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => setShowDeleteConfirm(review._id)}
+                                className="p-2 rounded-full hover:bg-red-100 text-red-600 transition-colors"
+                                title="Delete review"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </motion.button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       {review.comment && (
                         <SafeContent
@@ -572,9 +643,13 @@ export default function PlaceDetailPage() {
         isOpen={showReviewModal}
         onClose={() => {
           setShowReviewModal(false);
+          setEditingReview(null);
           setHoverRating(0);
+          setReviewData({ rating: 5, comment: '' });
+          setReviewImages([]);
+          setReviewImagePreviews([]);
         }}
-        title="Write a Review"
+        title={editingReview ? 'Edit Review' : 'Write a Review'}
       >
         <motion.div
           variants={staggerContainer}
@@ -702,7 +777,11 @@ export default function PlaceDetailPage() {
             <Button
               onClick={() => {
                 setShowReviewModal(false);
+                setEditingReview(null);
                 setHoverRating(0);
+                setReviewData({ rating: 5, comment: '' });
+                setReviewImages([]);
+                setReviewImagePreviews([]);
               }}
               variant="outline"
               className="flex-1"
@@ -712,6 +791,35 @@ export default function PlaceDetailPage() {
             </Button>
           </motion.div>
         </motion.div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(null)}
+        title="Delete Review"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Are you sure you want to delete this review? This action cannot be undone.
+          </p>
+          <div className="flex space-x-3">
+            <Button
+              onClick={() => handleDeleteReview(showDeleteConfirm!)}
+              variant="danger"
+              className="flex-1"
+            >
+              Delete
+            </Button>
+            <Button
+              onClick={() => setShowDeleteConfirm(null)}
+              variant="outline"
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       {/* Image Lightbox */}

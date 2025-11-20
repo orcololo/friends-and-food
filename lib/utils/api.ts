@@ -76,6 +76,8 @@ export const api = {
 
   // Reviews
   createReview: (data: any) => apiRequest('/reviews', { method: 'POST', body: JSON.stringify(data) }),
+  updateReview: (id: string, data: any) => apiRequest(`/reviews/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteReview: (id: string) => apiRequest(`/reviews/${id}`, { method: 'DELETE' }),
 
   // Posts
   getPosts: (params?: string) => apiRequest(`/posts${params ? `?${params}` : ''}`),
@@ -99,6 +101,8 @@ export const api = {
   createGroup: (data: any) => apiRequest('/groups', { method: 'POST', body: JSON.stringify(data) }),
   updateGroup: (id: string, data: any) => apiRequest(`/groups/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteGroup: (id: string) => apiRequest(`/groups/${id}`, { method: 'DELETE' }),
+  addGroupMember: (groupId: string, userId: string) => apiRequest(`/groups/${groupId}/members`, { method: 'POST', body: JSON.stringify({ userId }) }),
+  removeGroupMember: (groupId: string, userId: string) => apiRequest(`/groups/${groupId}/members?userId=${userId}`, { method: 'DELETE' }),
 
   // Friends
   getFriends: () => apiRequest('/friends'),
