@@ -18,6 +18,11 @@ async function postHandler(req: AuthenticatedRequest) {
       return errorResponse('Place and rating are required', 400);
     }
 
+    // Validate rating range
+    if (rating < 1 || rating > 5) {
+      return errorResponse('Rating must be between 1 and 5', 400);
+    }
+
     // Check if place exists
     const place = await Place.findById(placeId);
     if (!place) {

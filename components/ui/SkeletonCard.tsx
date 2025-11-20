@@ -10,11 +10,11 @@ const skeletonPulse = {
   initial: { opacity: 0.6 },
   animate: {
     opacity: [0.6, 1, 0.6],
-    transition: {
-      duration: 1.5,
-      repeat: Infinity,
-      ease: 'easeInOut',
-    },
+  },
+  transition: {
+    duration: 1.5,
+    repeat: Infinity,
+    ease: 'easeInOut' as const,
   },
 };
 
