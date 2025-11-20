@@ -61,9 +61,11 @@ async function postHandler(req: AuthenticatedRequest) {
       placeId: placeId || undefined,
     });
 
+    // Populate the post with user and place details (match GET endpoint structure)
     await post.populate([
       { path: 'userId', select: 'name username profileImage' },
       { path: 'placeId', select: 'name address' },
+      { path: 'likes', select: 'name username' },
     ]);
 
     return successResponse(post, 201);
