@@ -97,6 +97,12 @@ export const api = {
     if (limit) params.append('limit', limit.toString());
     return apiRequest(`/groups${params.toString() ? `?${params.toString()}` : ''}`);
   },
+  discoverGroups: (page?: number, limit?: number) => {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
+    return apiRequest(`/groups/discover${params.toString() ? `?${params.toString()}` : ''}`);
+  },
   getGroup: (id: string) => apiRequest(`/groups/${id}`),
   createGroup: (data: any) => apiRequest('/groups', { method: 'POST', body: JSON.stringify(data) }),
   updateGroup: (id: string, data: any) => apiRequest(`/groups/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
