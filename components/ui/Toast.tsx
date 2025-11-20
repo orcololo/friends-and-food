@@ -77,6 +77,9 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
       exit={{ opacity: 0, x: 100, scale: 0.8 }}
       transition={{ type: 'spring', stiffness: 300, damping: 25 }}
       className={`${getToastStyles(toast.type)} rounded-lg shadow-2xl min-w-[320px] max-w-[500px] pointer-events-auto overflow-hidden`}
+      role="alert"
+      aria-live="polite"
+      aria-atomic="true"
     >
       <div className="px-4 py-3">
         <div className="flex items-start gap-3">

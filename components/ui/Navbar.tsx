@@ -58,20 +58,31 @@ export default function Navbar() {
   ];
 
   return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg shadow-lg'
-          : 'bg-white dark:bg-gray-900 shadow-md'
-      }`}
-    >
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 group">
+    <>
+      {/* Skip to content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-orange-500 focus:text-white focus:rounded-lg focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
+
+      <motion.nav
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.3 }}
+        className={`sticky top-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg shadow-lg'
+            : 'bg-white dark:bg-gray-900 shadow-md'
+        }`}
+        role="navigation"
+        aria-label="Main navigation"
+      >
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <Link href="/" className="flex items-center space-x-2 group" aria-label="Friends & Food Home">
             <motion.div
               whileHover={{ rotate: 15, scale: 1.1 }}
               transition={{ type: 'spring', stiffness: 300 }}
@@ -118,14 +129,14 @@ export default function Navbar() {
           </div>
 
           {/* Right side actions */}
-          <div className="flex items-center space-x-4">
-            {/* Search Button */}
+          <div className="flex items-center space-x-2">
+            {/* Search Button - 44x44px touch target */}
             <Link href="/search">
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                title="Search"
+                className="p-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Search"
               >
                 <Search className="w-5 h-5 text-gray-700 dark:text-gray-300" />
               </motion.button>
@@ -134,22 +145,25 @@ export default function Navbar() {
             <ThemeToggle />
             <NotificationBell />
 
-            {/* User Avatar */}
-            <Link href={user ? `/profile/${user.username}` : '/profile'}>
+            {/* User Avatar - 44x44px touch target */}
+            <Link href={user ? `/profile/${user.username}` : '/profile'} aria-label={user ? `View profile for ${user.name}` : 'View profile'}>
               <motion.div
                 whileHover={{ scale: 1.1, rotate: 5 }}
                 whileTap={{ scale: 0.95 }}
-                className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-bold cursor-pointer shadow-lg hover:shadow-xl transition-shadow"
+                className="w-11 h-11 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-bold cursor-pointer shadow-lg hover:shadow-xl transition-shadow"
               >
                 {user?.name?.charAt(0) || 'U'}
               </motion.div>
             </Link>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Button - 44x44px touch target */}
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="md:hidden p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isMobileMenuOpen}
+              aria-controls="mobile-menu"
             >
               {isMobileMenuOpen ? (
                 <X className="w-6 h-6 text-gray-700 dark:text-gray-300" />
@@ -165,11 +179,14 @@ export default function Navbar() {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
+            id="mobile-menu"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed top-16 right-0 bottom-0 w-64 bg-white dark:bg-gray-900 shadow-2xl md:hidden overflow-y-auto"
+            className="fixed top-16 right-0 bottom-0 w-64 bg-white dark:bg-gray-900 shadow-2xl md:hidden overflow-y-auto max-h-[calc(100vh-4rem)]"
+            role="menu"
+            aria-label="Mobile navigation menu"
           >
             <div className="p-4 space-y-2">
               {navLinks.map((link) => {
@@ -208,6 +225,7 @@ export default function Navbar() {
           />
         )}
       </AnimatePresence>
-    </motion.nav>
+      </motion.nav>
+    </>
   );
 }
