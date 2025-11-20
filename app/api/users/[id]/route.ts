@@ -8,17 +8,18 @@ import { authenticate, AuthenticatedRequest } from '@/lib/middleware/auth';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 
 // GET user profile by ID or username
-async function getHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function getHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
     // Try to find by ID first, then by username
-    let user = await User.findById(params.id)
+    let user = await User.findById(id)
       .select('-password')
       .populate('friends', 'name username profileImage');
 
     if (!user) {
-      user = await User.findOne({ username: params.id })
+      user = await User.findOne({ username: id })
         .select('-password')
         .populate('friends', 'name username profileImage');
     }
@@ -64,12 +65,13 @@ async function getHandler(req: AuthenticatedRequest, { params }: { params: { id:
 }
 
 // PUT update user profile
-async function putHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function putHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
     // Users can only update their own profile
-    if (params.id !== req.user?.userId) {
+    if (id !== req.user?.userId) {
       return errorResponse('Not authorized to update this profile', 403);
     }
 
@@ -77,7 +79,7 @@ async function putHandler(req: AuthenticatedRequest, { params }: { params: { id:
     const { name, bio, profileImage, location } = body;
 
     const user = await User.findByIdAndUpdate(
-      params.id,
+      id,
       {
         ...(name && { name }),
         ...(bio !== undefined && { bio }),

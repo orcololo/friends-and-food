@@ -5,11 +5,12 @@ import { authenticate, AuthenticatedRequest } from '@/lib/middleware/auth';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 
 // GET single event by ID
-async function getHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function getHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const event = await Event.findById(params.id)
+    const event = await Event.findById(id)
       .populate('organizer', 'name username profileImage')
       .populate('placeId', 'name address cuisine images location')
       .populate('attendees', 'name username profileImage');
@@ -26,11 +27,12 @@ async function getHandler(req: AuthenticatedRequest, { params }: { params: { id:
 }
 
 // PUT update event
-async function putHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function putHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const event = await Event.findById(params.id);
+    const event = await Event.findById(id);
 
     if (!event) {
       return errorResponse('Event not found', 404);
@@ -42,7 +44,7 @@ async function putHandler(req: AuthenticatedRequest, { params }: { params: { id:
     }
 
     const body = await req.json();
-    const updatedEvent = await Event.findByIdAndUpdate(params.id, body, { new: true })
+    const updatedEvent = await Event.findByIdAndUpdate(id, body, { new: true })
       .populate('organizer', 'name username profileImage')
       .populate('placeId', 'name address cuisine')
       .populate('attendees', 'name username profileImage');
@@ -55,11 +57,12 @@ async function putHandler(req: AuthenticatedRequest, { params }: { params: { id:
 }
 
 // DELETE event
-async function deleteHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function deleteHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const event = await Event.findById(params.id);
+    const event = await Event.findById(id);
 
     if (!event) {
       return errorResponse('Event not found', 404);
@@ -70,7 +73,7 @@ async function deleteHandler(req: AuthenticatedRequest, { params }: { params: { 
       return errorResponse('Not authorized to delete this event', 403);
     }
 
-    await Event.findByIdAndDelete(params.id);
+    await Event.findByIdAndDelete(id);
 
     return successResponse({ message: 'Event deleted successfully' });
   } catch (error: any) {

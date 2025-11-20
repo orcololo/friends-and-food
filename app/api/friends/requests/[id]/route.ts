@@ -8,9 +8,10 @@ import { successResponse, errorResponse } from '@/lib/utils/response';
 import { emitToUser } from '@/lib/socket';
 
 // PUT accept/reject friend request
-async function putHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function putHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
     const body = await req.json();
     const { action } = body; // 'accept' or 'reject'
@@ -19,7 +20,7 @@ async function putHandler(req: AuthenticatedRequest, { params }: { params: { id:
       return errorResponse('Invalid action', 400);
     }
 
-    const friendRequest = await FriendRequest.findById(params.id);
+    const friendRequest = await FriendRequest.findById(id);
 
     if (!friendRequest) {
       return errorResponse('Friend request not found', 404);

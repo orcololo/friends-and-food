@@ -7,11 +7,12 @@ import { successResponse, errorResponse } from '@/lib/utils/response';
 import { emitToEvent } from '@/lib/socket';
 
 // GET comments for an event
-async function getHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function getHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const comments = await EventComment.find({ eventId: params.id })
+    const comments = await EventComment.find({ eventId: id })
       .populate('userId', 'name username profileImage')
       .sort({ createdAt: -1 })
       .limit(100);
@@ -27,9 +28,10 @@ async function getHandler(req: AuthenticatedRequest, { params }: { params: { id:
 }
 
 // POST add a comment
-async function postHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function postHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
     const body = await req.json();
     const { content } = body;
@@ -39,13 +41,13 @@ async function postHandler(req: AuthenticatedRequest, { params }: { params: { id
     }
 
     // Check if event exists
-    const event = await Event.findById(params.id);
+    const event = await Event.findById(id);
     if (!event) {
       return errorResponse('Event not found', 404);
     }
 
     const comment = await EventComment.create({
-      eventId: params.id,
+      eventId: id,
       userId: req.user!.userId,
       content,
     });
@@ -54,7 +56,7 @@ async function postHandler(req: AuthenticatedRequest, { params }: { params: { id
 
     // Emit real-time comment
     try {
-      emitToEvent(params.id, 'new-comment', {
+      emitToEvent(id, 'new-comment', {
         comment,
       });
     } catch (socketError) {

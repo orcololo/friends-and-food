@@ -5,11 +5,12 @@ import { authenticate, AuthenticatedRequest } from '@/lib/middleware/auth';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 
 // GET single post
-async function getHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function getHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const post = await Post.findById(params.id)
+    const post = await Post.findById(id)
       .populate('userId', 'name username profileImage')
       .populate('placeId', 'name address')
       .populate('likes', 'name username')
@@ -27,11 +28,12 @@ async function getHandler(req: AuthenticatedRequest, { params }: { params: { id:
 }
 
 // PUT update post
-async function putHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function putHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const post = await Post.findById(params.id);
+    const post = await Post.findById(id);
 
     if (!post) {
       return errorResponse('Post not found', 404);
@@ -80,11 +82,12 @@ async function putHandler(req: AuthenticatedRequest, { params }: { params: { id:
 }
 
 // DELETE post
-async function deleteHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function deleteHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const post = await Post.findById(params.id);
+    const post = await Post.findById(id);
 
     if (!post) {
       return errorResponse('Post not found', 404);
@@ -96,7 +99,7 @@ async function deleteHandler(req: AuthenticatedRequest, { params }: { params: { 
     }
 
     // Delete the post (comments are embedded, so they're automatically deleted)
-    await Post.findByIdAndDelete(params.id);
+    await Post.findByIdAndDelete(id);
 
     return successResponse({ message: 'Post deleted successfully' });
   } catch (error: any) {

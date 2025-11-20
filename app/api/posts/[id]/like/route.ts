@@ -5,11 +5,12 @@ import { authenticate, AuthenticatedRequest } from '@/lib/middleware/auth';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 
 // POST like post
-async function postHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function postHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const post = await Post.findById(params.id);
+    const post = await Post.findById(id);
 
     if (!post) {
       return errorResponse('Post not found', 404);
@@ -40,11 +41,12 @@ async function postHandler(req: AuthenticatedRequest, { params }: { params: { id
 }
 
 // DELETE unlike post
-async function deleteHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function deleteHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const post = await Post.findById(params.id);
+    const post = await Post.findById(id);
 
     if (!post) {
       return errorResponse('Post not found', 404);

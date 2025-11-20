@@ -7,12 +7,13 @@ import { authenticate, AuthenticatedRequest } from '@/lib/middleware/auth';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 
 // GET group events
-async function getHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function getHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
     // Check if user is member
-    const group = await Group.findById(params.id);
+    const group = await Group.findById(id);
     if (!group) {
       return errorResponse('Group not found', 404);
     }
@@ -42,9 +43,10 @@ async function getHandler(req: AuthenticatedRequest, { params }: { params: { id:
 }
 
 // POST create group event
-async function postHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function postHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
     const body = await req.json();
     const { title, description, placeId, date, time } = body;
@@ -54,7 +56,7 @@ async function postHandler(req: AuthenticatedRequest, { params }: { params: { id
     }
 
     // Check if user is member
-    const group = await Group.findById(params.id);
+    const group = await Group.findById(id);
     if (!group) {
       return errorResponse('Group not found', 404);
     }

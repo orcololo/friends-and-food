@@ -6,11 +6,12 @@ import { authenticate, AuthenticatedRequest } from '@/lib/middleware/auth';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 
 // GET comments for a post
-async function getHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function getHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const post = await Post.findById(params.id)
+    const post = await Post.findById(id)
       .populate('comments.userId', 'name username profileImage')
       .select('comments');
 
@@ -34,9 +35,10 @@ async function getHandler(req: AuthenticatedRequest, { params }: { params: { id:
 }
 
 // POST add a comment to a post
-async function postHandler(req: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function postHandler(req: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
+    const { id } = await params;
 
     const body = await req.json();
     const { content } = body;
@@ -50,7 +52,7 @@ async function postHandler(req: AuthenticatedRequest, { params }: { params: { id
     }
 
     // Find the post and add comment
-    const post = await Post.findById(params.id);
+    const post = await Post.findById(id);
     if (!post) {
       return errorResponse('Post not found', 404);
     }
